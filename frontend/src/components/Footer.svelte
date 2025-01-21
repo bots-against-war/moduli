@@ -25,7 +25,7 @@
       icon={GithubSolid}
       {buttonClass}
       {iconClass}
-      href="https://github.com/bots-against-war/telebot-constructor"
+      href="https://github.com/bots-against-war/moduli"
       target="_blank"
     >
       GitHub
@@ -34,7 +34,7 @@
       icon={CodeBranchSolid}
       {buttonClass}
       {iconClass}
-      href={"https://github.com/bots-against-war/telebot-constructor/releases/tag/__buildTimeReplacedVersion"}
+      href={"https://github.com/bots-against-war/moduli/releases/tag/__buildTimeReplacedVersion"}
       target="_blank"
       title="built on __buildTimeReplacedDatetime"
     >
