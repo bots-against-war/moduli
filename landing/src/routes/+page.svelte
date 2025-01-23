@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { assets } from "$app/paths";
   import { A, Button } from "flowbite-svelte";
   import { GithubSolid } from "flowbite-svelte-icons";
   import { twMerge } from "tailwind-merge";
@@ -19,10 +20,13 @@
     isHeaderHidden = st > lastScrollTop;
     lastScrollTop = st <= 0 ? 0 : st;
   }
+  let innerWidth: number;
 </script>
 
-<svelte:window on:scroll={hideHeaderOnScrollDown} />
-<header class={"fixed top-0 w-full transition-all header-background " + (isHeaderHidden ? "top-[-30vh]" : "")}>
+<svelte:window on:scroll={hideHeaderOnScrollDown} bind:innerWidth />
+<header
+  class={`fixed top-0 left-0 w-full transition-all header-background z-10 ` + (isHeaderHidden ? "top-[-30vh]" : "")}
+>
   <div>
     <div class="grid grid-cols-2 md:grid-cols-3 py-5 px-10">
       <Logo />
@@ -85,37 +89,49 @@
 </header>
 
 <main class="px-3 md:p-0">
-  <div class="w-full h-screen flex items-center justify-center">
-    <div class="flex flex-col items-center gap-7 text-center">
-      <h1 class={twMerge(typography("h1"), "max-w-[350px] md:max-w-[650px]")}>Telegram bots for activism made easy</h1>
-      <p class={twMerge(typography("body"), "max-w-[330px] md:max-w-[400px]")}>
-        Open-source no-code platform empowers you to create and operate professional Telegram bots
-      </p>
-      <div class="flex flex-col md:flex-row gap-4 w-full justify-center">
-        <Button
-          href={"https://t.me/bots_against_war_bot"}
+  <!-- first hero -->
+  <div class={`w-full min-h-screen items-center justify-center relative background-gradient`}>
+    <img
+      alt="background"
+      src={`${assets}/main-bg-desktop-en.png`}
+      class="w-full"
+      style={`padding-top: ${Math.max((1280 - innerWidth) / 2.5, 0)}px`}
+    />
+
+    <div class="w-full absolute top-0 mt-[130px]">
+      <div class="flex flex-col items-center gap-7 text-center">
+        <h1 class={twMerge(typography("h1"), "max-w-[350px] md:max-w-[650px]")}>
+          Telegram bots for activism made easy
+        </h1>
+        <p class={twMerge(typography("body"), "max-w-[330px] md:max-w-[400px]")}>
+          Open-source no-code platform empowers you to create and operate professional Telegram bots
+        </p>
+        <div class="flex flex-col md:flex-row gap-4 w-full justify-center">
+          <Button
+            href={"https://t.me/bots_against_war_bot"}
+            target="_blank"
+            size="lg"
+            class={twMerge(typography("button-xl"), buttonSecondary, "w-full md:w-auto")}
+          >
+            Contact us
+          </Button>
+          <Button
+            href={constructorHref}
+            size="lg"
+            class={twMerge(typography("button-xl"), buttonPrimary, "w-full md:w-auto")}
+          >
+            Create bot
+          </Button>
+        </div>
+        <A
+          href="https://github.com/bots-against-war/moduli"
           target="_blank"
-          size="lg"
-          class={twMerge(typography("button-xl"), buttonSecondary, "w-full md:w-auto")}
+          class={twMerge(typography("body"), buttonLink, "mt-6")}
         >
-          Contact us
-        </Button>
-        <Button
-          href={constructorHref}
-          size="lg"
-          class={twMerge(typography("button-xl"), buttonPrimary, "w-full md:w-auto")}
-        >
-          Create bot
-        </Button>
+          <GithubSolid />
+          <span class="ml-3">Open source</span>
+        </A>
       </div>
-      <A
-        href="https://github.com/bots-against-war/moduli"
-        target="_blank"
-        class={twMerge(typography("body"), buttonLink, "mt-6")}
-      >
-        <GithubSolid />
-        <span class="ml-3">We are open source</span>
-      </A>
     </div>
   </div>
 
@@ -125,7 +141,8 @@
 </main>
 
 <style>
-  .header-background {
-    background: linear-gradient(to bottom, white, 99%, transparent);
+  .background-gradient {
+    /* background: linear-gradient(white, #f7f7f7, 30%, #f7f7f7, 70%, white); */
+    background: radial-gradient(closest-side, #f7f7f7, 70%, white);
   }
 </style>
