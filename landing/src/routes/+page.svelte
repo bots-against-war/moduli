@@ -20,7 +20,24 @@
     isHeaderHidden = st > lastScrollTop;
     lastScrollTop = st <= 0 ? 0 : st;
   }
+
   let innerWidth: number;
+
+  const useCasesData = [
+    {
+      title: "Safe and convenient feedback",
+      subtitle: "Let people reach you and talk to them through the bot without compromising anyone’s security",
+    },
+    {
+      title: "Data collection and management",
+      subtitle: "Collect applications, submissions and other kinds of forms without ever leaving Telegram",
+    },
+    {
+      title: "Interactive knowledge base",
+      subtitle:
+        "Turn a boring FAQ into an interactive knowledge base, easily accessible and navigable through your bot",
+    },
+  ];
 </script>
 
 <svelte:window on:scroll={hideHeaderOnScrollDown} bind:innerWidth />
@@ -143,8 +160,33 @@
   </div>
 
   <!-- use cases -->
-  <div class="w-full">
-    <h1 class={twMerge(typography("h1"), "text-center")}>Bots as activist tools</h1>
+  <div class="w-full flex flex-col items-center gap-10 md:gap-20">
+    <h2 class={typography("h2")}>Bots as activist tools</h2>
+
+    {#each useCasesData as useCase, idx}
+      <div
+        class={"flex mx-4 md:mx-10 gap-4 md:gap-24 items-center flex-col " +
+          (idx % 2 == 0 ? `md:flex-row` : `md:flex-row-reverse`)}
+      >
+        <img
+          alt="use case 1: feedback"
+          src={`${assets}/usecase-${idx + 1}-en.jpg`}
+          class="md:w-[55%] rounded-lg md:rounded-3xl"
+        />
+        <div
+          class={"md:max-w-[400px] flex flex-col gap-1 md:gap-4 text-center md:text-left " +
+            (idx % 2 == 0 ? "" : "md:text-right items-end")}
+        >
+          <img
+            alt={`use case ${idx + 1} logo`}
+            src={`${assets}/icons/usecase-${idx + 1}.jpg`}
+            class="w-12 hidden md:block"
+          />
+          <h3 class={typography("h3")}>{useCase.title}</h3>
+          <p>{useCase.subtitle}</p>
+        </div>
+      </div>
+    {/each}
   </div>
 </main>
 
