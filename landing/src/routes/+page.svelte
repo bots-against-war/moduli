@@ -25,7 +25,7 @@
 
 <svelte:window on:scroll={hideHeaderOnScrollDown} bind:innerWidth />
 <header
-  class={`fixed top-0 left-0 w-full transition-all header-background z-10 ` + (isHeaderHidden ? "top-[-30vh]" : "")}
+  class={`fixed top-0 left-0 w-full transition-all header-background z-20 ` + (isHeaderHidden ? "top-[-30vh]" : "")}
 >
   <div>
     <div class="grid grid-cols-2 md:grid-cols-3 py-5 px-10">
@@ -89,16 +89,22 @@
 </header>
 
 <main class="px-3 md:p-0">
-  <!-- first hero -->
-  <div class={`w-full min-h-screen items-center justify-center relative background-gradient`}>
+  <!-- title -->
+  <div class="w-full relative background-gradient">
     <img
       alt="background"
       src={`${assets}/main-bg-desktop-en.png`}
-      class="w-full"
+      class="w-full hidden md:block"
       style={`padding-top: ${Math.max((1280 - innerWidth) / 2.5, 0)}px`}
     />
+    <img
+      alt="background"
+      src={`${assets}/main-1-mobile-en.png`}
+      class="w-full block md:hidden"
+      style="padding-top: 80px;"
+    />
 
-    <div class="w-full absolute top-0 mt-[130px]">
+    <div class="w-full relative md:absolute top-0 my-8 md:mt-[130px]">
       <div class="flex flex-col items-center gap-7 text-center">
         <h1 class={twMerge(typography("h1"), "max-w-[350px] md:max-w-[650px]")}>
           Telegram bots for activism made easy
@@ -106,7 +112,7 @@
         <p class={twMerge(typography("body"), "max-w-[330px] md:max-w-[400px]")}>
           Open-source no-code platform empowers you to create and operate professional Telegram bots
         </p>
-        <div class="flex flex-col md:flex-row gap-4 w-full justify-center">
+        <div class="flex flex-col md:flex-row gap-4 w-full justify-center px-[5vw]">
           <Button
             href={"https://t.me/bots_against_war_bot"}
             target="_blank"
@@ -133,16 +139,23 @@
         </A>
       </div>
     </div>
+    <img alt="background" src={`${assets}/main-2-mobile-en.png`} class="w-full block md:hidden" />
   </div>
 
-  <div class="w-full h-screen flex flex-row items-center justify-center">
-    <h1 class={typography("h1")}>Hello world!</h1>
+  <!-- use cases -->
+  <div class="w-full">
+    <h1 class={twMerge(typography("h1"), "text-center")}>Bots as activist tools</h1>
   </div>
 </main>
 
 <style>
   .background-gradient {
-    /* background: linear-gradient(white, #f7f7f7, 30%, #f7f7f7, 70%, white); */
+    /* radial gradient to support larger-than body screens without a harsh boundary */
     background: radial-gradient(closest-side, #f7f7f7, 70%, white);
+    /* background: radial-gradient(closest-side, red, 70%, white); */
+  }
+
+  .header-background {
+    background: linear-gradient(white, 95%, transparent);
   }
 </style>
