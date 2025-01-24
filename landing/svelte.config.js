@@ -39,6 +39,9 @@ const config = {
       appTemplate: "src/app.html",
     },
     outDir: "build-kit",
+    prerender: {
+      handleHttpError: "warn",
+    },
   },
 };
 

@@ -23,24 +23,6 @@
   }
 
   let innerWidth: number;
-  let useCasesContainerEl: HTMLElement | null = null;
-  let featuresContainerEl: HTMLElement | null = null;
-
-  const handleHashNavigation = () => {
-    setTimeout(() => {
-      let hash: string;
-      try {
-        hash = window.location.hash;
-      } catch {
-        return;
-      }
-      const el = hash == "#features" ? featuresContainerEl : hash == "#use-cases" ? useCasesContainerEl : null;
-      if (el === null) return;
-      el.scrollIntoView({ behavior: "smooth" });
-    }, 200);
-  };
-
-  handleHashNavigation();
 
   const useCasesData = [
     {
@@ -115,8 +97,8 @@
       <Logo />
 
       <div class="hidden md:flex flex-row gap-6 justify-self-center">
-        <Link href="#use-cases" on:click={handleHashNavigation} internal>use cases</Link>
-        <Link href="#features" on:click={handleHashNavigation} internal>features</Link>
+        <Link href="#use-cases" internal>use cases</Link>
+        <Link href="#features" internal>features</Link>
       </div>
 
       <div class="flex flex-row gap-8 justify-self-end">
@@ -217,7 +199,7 @@
   </div>
 
   <!-- use cases -->
-  <div class={centeringContainerClass} bind:this={useCasesContainerEl}>
+  <div id="use-cases" class={centeringContainerClass}>
     <div class="flex flex-col items-center gap-10 md:gap-20">
       <h2 class={typography("h2")}>Bots as activist tools</h2>
 
@@ -249,7 +231,7 @@
   </div>
 
   <!-- features -->
-  <div class={centeringContainerClass} bind:this={featuresContainerEl}>
+  <div id="features" class={centeringContainerClass}>
     <div class="mt-12 md:mt-24 flex flex-col items-center gap-10 md:gap-20">
       <h2 class={typography("h2")}>Key features</h2>
       <div class="grid grid-cols-2 md:grid-cols-4 md:grid-rows-2 gap-y-16 gap-x-6 mx-6">
