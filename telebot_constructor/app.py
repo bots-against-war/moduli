@@ -1194,7 +1194,7 @@ class TelebotConstructorApp:
         async def api_version(request: web.Request) -> web.Response:
             return web.Response(text=VERSION or "<unset>")
 
-        STATIC_FILE_GLOBS = ["assets/*", "landing-assets/*", "favicon.*"]
+        STATIC_FILE_GLOBS = ["assets/*", "landing-assets/*", "favicon.*", "*.png", "*.jpg", "icons/*"]
 
         @routes.get("/{path:(?!api/).*}")  # mathing all paths except those starting with /api prefix
         async def serve_static_file(request: web.Request) -> web.StreamResponse:

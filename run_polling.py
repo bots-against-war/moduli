@@ -101,7 +101,7 @@ async def main() -> None:
         redis=redis,
         auth=auth,
         secret_store=secret_store,
-        static_files_dir=Path("frontend/dist"),
+        # static_files_dir=Path("frontend/dist"),
         telegram_files_downloader=telegram_files_downloader,
         media_store=media_store,
     )

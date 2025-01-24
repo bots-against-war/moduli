@@ -99,7 +99,9 @@
 >
   <div>
     <div class="grid grid-cols-2 md:grid-cols-3 py-5 px-10">
-      <Logo />
+      <div class="self-center">
+        <Logo />
+      </div>
 
       <div class="hidden md:flex flex-row gap-6 justify-self-center">
         <Link href="#use-cases" internal>{$t("use_cases")}</Link>
@@ -221,8 +223,8 @@
             class="md:w-[55%] rounded-lg md:rounded-3xl"
           />
           <div
-            class={"md:max-w-[400px] flex flex-col gap-1 md:gap-4 text-center md:text-left " +
-              (idx % 2 == 0 ? "" : "md:text-right items-end")}
+            class={"md:max-w-[400px] flex flex-col gap-1 md:gap-4 text-center " +
+              (idx % 2 == 0 ? "md:text-left" : "md:text-right md:items-end")}
           >
             <img
               alt={`use case ${useCase.logo}`}
@@ -245,8 +247,8 @@
         {#each featuresData as feature}
           <div class="flex flex-col text-center items-center gap-4">
             <img alt={`feature ${feature.logo}`} src={`${assets}/icons/${feature.logo}`} class="w-16" />
-            <div>
-              <h4 class="text-xl font-urbanist font-medium">{$t(feature.title)}</h4>
+            <div class="flex flex-col gap-2">
+              <h4 class="text-xl font-medium">{$t(feature.title)}</h4>
               <span>{$t(feature.subtitle)}</span>
             </div>
           </div>

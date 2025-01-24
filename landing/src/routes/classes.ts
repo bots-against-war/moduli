@@ -14,7 +14,8 @@ export function typography(t: TypographyType): string {
 
   // font
   if (["h1", "h2", "h3", "button-xl", "button-l", "button-s"].includes(t)) {
-    classes.push("font-urbanist");
+    // TODO: choose new headings font
+    // classes.push("font-urbanist");
   }
 
   // weight
