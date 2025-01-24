@@ -1,14 +1,14 @@
 <script lang="ts">
   import { Avatar, Button, NavBrand, Navbar, Popover } from "flowbite-svelte";
   import { t } from "svelte-i18n";
-  import logo from "../assets/logo.svg";
+  import Logo from "../../../landing/src/routes/components/Logo.svelte";
   import { loggedInUserStore } from "../globalStateStores";
-  import { botListingPath } from "../routeUtils";
+  import { landingPath } from "../routeUtils";
 </script>
 
 <Navbar fluid={true} color="primary" shadow>
-  <NavBrand href={botListingPath()} target="_blank">
-    <img src={logo} class="h-10" alt="Telebot constructor Logo" />
+  <NavBrand href={landingPath()} target="_blank">
+    <Logo />
   </NavBrand>
   <slot>
     <Avatar
