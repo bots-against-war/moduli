@@ -165,7 +165,7 @@ class GroupChatAuth(Auth):
                 await self.access_code_store.save(self.CONST_KEY, access_code)
                 await self.bot.send_message(
                     chat_id=self.auth_chat_id,
-                    text=f"🔑🔑🔑\n\nTelebot Constructor access code\n\n<pre>{access_code}</pre>",
+                    text=f"🔑🔑🔑\n\nModuli access code\n\n<pre>{access_code}</pre>",
                     parse_mode="HTML",
                 )
             return web.Response(text="OK", status=200)

@@ -44,3 +44,7 @@ export function settingsPath(botId: string): string {
 export function errorsPath(botId: string): string {
   return withBasePath(`/errors/${encodePathPart(botId)}`);
 }
+
+export function landingPath(): string {
+  return withBasePath("");
+}

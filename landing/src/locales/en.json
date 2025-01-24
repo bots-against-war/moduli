@@ -1,0 +1,61 @@
+{
+  "use_cases": "use cases",
+  "features": "features",
+  "start": "Start",
+  "contact_us": "Contact us",
+  "create_bot": "Create bot",
+  "main": {
+    "title": "Telegram bots for activism made easy",
+    "subtitle": "Open-source no-code platform empowering you to create and operate professional Telegram bots"
+  },
+  "use_cases_section": {
+    "title": "Bots as activist tools",
+    "feedback": {
+      "title": "Safe and convenient feedback",
+      "subtitle": "Let people reach you and talk to them through the bot without compromising anyone’s security"
+    },
+    "form": {
+      "title": "Data collection and management",
+      "subtitle": "Collect applications, submissions and other kinds of forms without ever leaving Telegram"
+    },
+    "kb": {
+      "title": "Interactive knowledge base",
+      "subtitle": "Turn a boring FAQ into an interactive knowledge base, easily accessible and navigable through your bot"
+    }
+  },
+  "features_section": {
+    "title": "Key features",
+    "visual": {
+      "title": "Visual interface",
+      "subtitle": "No coding skills required – create bots in a visual environment"
+    },
+    "multilang": {
+      "title": "Multilanguage bots",
+      "subtitle": "Bots are easily localizable – talk to users in their own language"
+    },
+    "templates": {
+      "title": "Templates",
+      "subtitle": "Use examples to get familiar with the platform"
+    },
+    "customization": {
+      "title": "Customization",
+      "subtitle": "In addition to the common functionality, you can request custom modules"
+    },
+    "stats": {
+      "title": "Statistics",
+      "subtitle": "Track statistics and export available data"
+    },
+    "integrations": {
+      "title": "Integrations",
+      "subtitle": "Integrate bots in your workflow: export data to Airtable, Google Sheets and more"
+    },
+    "open_source": {
+      "subtitle": "Easily self-host for maximum security and transparency"
+    },
+    "privacy": {
+      "title": "Privacy",
+      "subtitle": "Bots are private-by-default, protecting identities of both users and your team members"
+    }
+  },
+  "contact_us_lowercase": "contact us"
+}

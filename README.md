@@ -1,10 +1,9 @@
-# telebot-constructor
+# moduli
 
-Free & open-source no-code constructor of Telegram bots for grass-roots activist initiatives
-and human rights organizations. Focused on privacy both for bot users and admins.
+Free & open-source no-code Telegram-bot constructor for activism. Focused on privacy both for bot users and admins.
 Developed by [bots against war](https://t.me/bots_against_war_bot) team.
 
-## How to use
+## Self-hosting
 
 :warning: Under construction
 
@@ -107,3 +106,4 @@ We use:
 - `svelvet` (nodes/connections engine), see [docs](https://svelvet.mintlify.app/introduction)
 - `flowbite-icons-svelte` for icons, see [catalog](https://flowbite-svelte-icons.vercel.app/solid)
 - `svelte-i18n` for internationalization
+- `svelte-kit` to prerender a separate static page for landing

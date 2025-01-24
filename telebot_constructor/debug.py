@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from aiohttp import web
+from aiohttp import hdrs, web
 from aiohttp.typedefs import Handler
 
 DEBUG = bool(os.getenv("TELEBOT_CONSTRUCTOR_DEBUG"))
@@ -18,8 +18,10 @@ def setup_debugging(app: web.Application) -> None:  # pragma: no cover
         return
 
     @web.middleware
-    async def sleepy_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:
+    async def debug_middleware(request: web.Request, handler: Handler) -> web.StreamResponse:
         await asyncio.sleep(SLEEP_BEFORE_REQUEST)
-        return await handler(request)
+        resp = await handler(request)
+        resp.headers.pop(hdrs.CACHE_CONTROL, None)  # disable caching to develop frontend files
+        return resp
 
-    app.middlewares.append(sleepy_middleware)
+    app.middlewares.append(debug_middleware)

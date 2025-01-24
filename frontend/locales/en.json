@@ -195,7 +195,7 @@
         "p4_l6": "Can't handle files larger than 20 MB",
         "tab_title": "Glossary"
       },
-      "p1": "Telebot Constructor allows you to create complex and multilingual dialogues with various conditions and solutions in the language of flowcharts. In this studio, you assemble the logic of the bot from blocks, like a constructor, customizing its behavior to suit your needs.",
+      "p1": "Moduli allows you to create complex and multilingual dialogues with various conditions and solutions in the language of flowcharts. In this studio, you assemble the logic of the bot from blocks, like a constructor, customizing its behavior to suit your needs.",
       "title": "About"
     },
     "confirm_exit_unsaved_changes": "Exit studio? Unsaved changes will be lost.",

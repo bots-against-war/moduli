@@ -1185,13 +1185,16 @@ class TelebotConstructorApp:
             return web.Response(
                 body=static_file_content(self.static_files_dir / "landing.html"),
                 content_type="text/html",
+                headers={
+                    hdrs.CACHE_CONTROL: "private, max-age=2628000",  # ~month
+                },
             )
 
         @routes.get("/api/version")
         async def api_version(request: web.Request) -> web.Response:
             return web.Response(text=VERSION or "<unset>")
 
-        STATIC_FILE_GLOBS = ["assets/*", "favicon.ico"]
+        STATIC_FILE_GLOBS = ["assets/*", "landing-assets/*", "favicon.*", "*.png", "*.jpg", "icons/*"]
 
         @routes.get("/{path:(?!api/).*}")  # mathing all paths except those starting with /api prefix
         async def serve_static_file(request: web.Request) -> web.StreamResponse:

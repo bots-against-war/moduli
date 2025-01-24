@@ -4,21 +4,21 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "API_ORIGIN=http://localhost:8088 vite --port 8081 frontend",
-    "build": "vite build frontend",
-    "watch": "vite build --watch frontend",
-    "preview": "vite build frontend && vite preview frontend",
+    "dev": "cd frontend && API_ORIGIN=http://localhost:8088 vite --port 8081",
+    "build": "cd frontend && vite build",
+    "dev-landing": "cd landing && vite --port 8082",
+    "build-landing": "cd landing && vite build",
     "check": "svelte-check --tsconfig tsconfig.json --workspace frontend/ --compiler-warnings \"ts:ignore\"",
-    "check:watch": "svelte-check --tsconfig ./tsconfig.json --workspace frontend/ --watch",
     "format": "prettier --write frontend",
-    "pydantic:to:ts": "poetry run python3 scripts/models/pydantic2jsonschema.py && node scripts/models/jsonschema2ts.mjs",
-    "dev:with-deps": "API_ORIGIN=http://localhost:8088 vite --port 8081 --force frontend"
+    "pydantic:to:ts": "poetry run python3 scripts/models/pydantic2jsonschema.py && node scripts/models/jsonschema2ts.mjs"
   },
   "devDependencies": {
     "@jhubbardsf/svelte-sortablejs": "^1.1.0",
     "@rollup/plugin-node-resolve": "^15.2.1",
     "@rollup/plugin-replace": "^5.0.2",
     "@svackages/truncate": "^1.0.0",
+    "@sveltejs/adapter-static": "^3.0.8",
+    "@sveltejs/kit": "^2.16.0",
     "@sveltejs/vite-plugin-svelte": "^3.0.1",
     "@tsconfig/svelte": "^5.0.0",
     "autoprefixer": "^10.4.16",
