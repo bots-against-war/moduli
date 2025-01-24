@@ -240,26 +240,23 @@
   <!-- cta screen -->
   <div class="w-full h-[80vh] main-gradient flex items-center justify-center">
     <div class="flex flex-col items-end">
-      <img
-        alt="background"
-        src={`${assets}/cta-en.png`}
-        class="w-[60vw]"
-        style={`padding-top: ${Math.max((1280 - innerWidth) / 2.5, 0)}px`}
-      />
-      <Button size="sm" class={twMerge(typography("button-xl"), buttonPrimary, "mt-2 mr-3")} href={constructorHref}>
+      <img alt="background" src={`${assets}/cta-en.png`} class="w-full md:w-[80vw]" />
+      <Button size="sm" class={twMerge(typography("button-xl"), buttonPrimary, "mt-2 md:mr-9")} href={constructorHref}>
         Create bot
       </Button>
     </div>
   </div>
 
   <footer class="w-full">
-    <div class="grid grid-cols-2 md:grid-cols-3 py-3 px-10">
+    <div class="flex flex-row justify-between items-center py-3 px-3">
       <Logo />
-      <div class="justify-self-center">
-        designed by <Link href="https://www.linkedin.com/in/sevenard/" class_="font-bold">Serendip.</Link>
-      </div>
+      <span class="justify-self-center text-center">
+        <span class="hidden md:inline">designed by </span>
+        <span class="md:hidden">dsgn → </span>
+        <Link href="https://www.linkedin.com/in/sevenard/" class_="font-bold">Serendip.</Link>
+      </span>
       <Link href={contactUsHref} class_="justify-self-end flex flex-row gap-3 items-center">
-        contact us
+        <span class="hidden md:inline">contact us</span>
         <img alt="telegram logo" src={`${assets}/icons/telegram-dark.svg`} class="w-6" />
       </Link>
     </div>
