@@ -8,6 +8,6 @@
   export let internal: boolean = false;
 </script>
 
-<A {href} target={internal ? "" : "_blank"} class={twMerge(typography("body"), buttonLink, class_)}>
+<A {href} target={internal ? "" : "_blank"} class={twMerge(typography("body"), buttonLink, class_)} on:click>
   <slot />
 </A>
