@@ -1,12 +1,18 @@
 <script lang="ts">
   import { assets } from "$app/paths";
-  import { A, Button } from "flowbite-svelte";
+  import { initI18n, setLocale } from "$lib/i18n";
+  import { Button } from "flowbite-svelte";
   import { GithubSolid } from "flowbite-svelte-icons";
+  import { locale, t } from "svelte-i18n";
   import { twMerge } from "tailwind-merge";
   import { buttonLink, buttonPrimary, buttonSecondary, typography } from "./classes";
+  import Link from "./components/Link.svelte";
   import Logo from "./components/Logo.svelte";
   import { constructorHref, contactUsHref, githubHref } from "./utils";
-  import Link from "./components/Link.svelte";
+
+  initI18n();
+  let otherLocale: string;
+  $: otherLocale = $locale == "en" ? "ru" : "en";
 
   let lastScrollTop = 0;
   let isHeaderHidden = false;
@@ -27,61 +33,60 @@
   const useCasesData = [
     {
       logo: "feedback.svg",
-      title: "Safe and convenient feedback",
-      subtitle: "Let people reach you and talk to them through the bot without compromising anyone’s security",
+      title: "use_cases_section.feedback.title",
+      subtitle: "use_cases_section.feedback.subtitle",
     },
     {
       logo: "form.svg",
-      title: "Data collection and management",
-      subtitle: "Collect applications, submissions and other kinds of forms without ever leaving Telegram",
+      title: "use_cases_section.form.title",
+      subtitle: "use_cases_section.form.subtitle",
     },
     {
       logo: "knowledge_base.svg",
-      title: "Interactive knowledge base",
-      subtitle:
-        "Turn a boring FAQ into an interactive knowledge base, easily accessible and navigable through your bot",
+      title: "use_cases_section.kb.title",
+      subtitle: "use_cases_section.kb.subtitle",
     },
   ];
   const featuresData = [
     {
       logo: "visual.svg",
-      title: "Visual interface",
-      subtitle: "No coding skills required – create bots in a visual environment",
+      title: "features_section.visual.title",
+      subtitle: "features_section.visual.subtitle",
     },
     {
       logo: "multilang.svg",
-      title: "Multilanguage bots",
-      subtitle: "Bots are easily localizable – talk to users in their own language",
+      title: "features_section.multilang.title",
+      subtitle: "features_section.multilang.subtitle",
     },
     {
       logo: "template.svg",
-      title: "Templates",
-      subtitle: "Use examples to get familiar with the platform",
+      title: "features_section.templates.title",
+      subtitle: "features_section.templates.subtitle",
     },
     {
       logo: "pallette.svg",
-      title: "Customization",
-      subtitle: "In addition to the common functionality, you can request custom modules",
+      title: "features_section.customization.title",
+      subtitle: "features_section.customization.subtitle",
     },
     {
       logo: "statistics.svg",
-      title: "Statistics",
-      subtitle: "Track statistics and export available data",
+      title: "features_section.stats.title",
+      subtitle: "features_section.stats.subtitle",
     },
     {
       logo: "integration.svg",
-      title: "Integrations",
-      subtitle: "Integrate bots in your workflow: export data to Airtable, Google Sheets and more",
+      title: "features_section.integrations.title",
+      subtitle: "features_section.integrations.subtitle",
     },
     {
       logo: "github.svg",
       title: "Open source",
-      subtitle: "Easily self-host for maximum security and transparency",
+      subtitle: "features_section.open_source.subtitle",
     },
     {
       logo: "privacy.svg",
-      title: "Privacy",
-      subtitle: "Bots are private-by-default, protecting identities of both users and your team members",
+      title: "features_section.privacy.title",
+      subtitle: "features_section.privacy.subtitle",
     },
   ];
 
@@ -97,18 +102,20 @@
       <Logo />
 
       <div class="hidden md:flex flex-row gap-6 justify-self-center">
-        <Link href="#use-cases" internal>use cases</Link>
-        <Link href="#features" internal>features</Link>
+        <Link href="#use-cases" internal>{$t("use_cases")}</Link>
+        <Link href="#features" internal>{$t("features")}</Link>
       </div>
 
       <div class="flex flex-row gap-8 justify-self-end">
-        <button class={twMerge(typography("body"), buttonLink)} on:click={console.log}>en</button>
+        <button class={twMerge(typography("body"), buttonLink)} on:click={() => setLocale(otherLocale)}>
+          {otherLocale}
+        </button>
         <Button
           size="sm"
           class={twMerge(typography("button-s"), buttonPrimary, "hidden md:block")}
           href={constructorHref}
         >
-          Start
+          {$t("start")}
         </Button>
         <Button
           size="sm"
@@ -124,8 +131,8 @@
     {#if isMenuOpen}
       <div class="w-full h-screen flex justify-center">
         <div class="mt-6 flex flex-col gap-6 items-center w-full max-w-[350px] mx-4">
-          <Link href="#use-cases" internal>use cases</Link>
-          <Link href="#features" internal>features</Link>
+          <Link href="#use-cases" internal>{$t("use_cases")}</Link>
+          <Link href="#features" internal>{$t("features")}</Link>
           <Link href={githubHref} class_="mt-6"><GithubSolid /></Link>
           <div class="flex flex-col gap-4 mt-6 w-full">
             <Button
@@ -134,10 +141,10 @@
               size="lg"
               class={twMerge(typography("button-xl"), buttonSecondary)}
             >
-              Contact us
+              {$t("contact_us")}
             </Button>
             <Button href={constructorHref} size="lg" class={twMerge(typography("button-xl"), buttonPrimary)}>
-              Create bot
+              {$t("create_bot")}
             </Button>
           </div>
         </div>
@@ -166,10 +173,10 @@
       <div class="w-full relative md:absolute top-0 my-8 md:mt-[130px]">
         <div class="flex flex-col items-center gap-7 text-center">
           <h1 class={twMerge(typography("h1"), "max-w-[350px] md:max-w-[650px]")}>
-            Telegram bots for activism made easy
+            {$t("main.title")}
           </h1>
           <p class={twMerge(typography("body"), "max-w-[330px] md:max-w-[400px]")}>
-            Open-source no-code platform empowers you to create and operate professional Telegram bots
+            {$t("main.subtitle")}
           </p>
           <div class="flex flex-col md:flex-row gap-4 w-full justify-center px-[5vw]">
             <Button
@@ -178,14 +185,14 @@
               size="lg"
               class={twMerge(typography("button-xl"), buttonSecondary, "w-full md:w-auto")}
             >
-              Contact us
+              {$t("contact_us")}
             </Button>
             <Button
               href={constructorHref}
               size="lg"
               class={twMerge(typography("button-xl"), buttonPrimary, "w-full md:w-auto")}
             >
-              Create bot
+              {$t("create_bot")}
             </Button>
           </div>
           <Link href="https://github.com/bots-against-war/moduli" class_="mt-6">
@@ -201,7 +208,7 @@
   <!-- use cases -->
   <div id="use-cases" class={centeringContainerClass}>
     <div class="flex flex-col items-center gap-10 md:gap-20">
-      <h2 class={typography("h2")}>Bots as activist tools</h2>
+      <h2 class={typography("h2")}>{$t("use_cases_section.title")}</h2>
 
       {#each useCasesData as useCase, idx}
         <div
@@ -222,8 +229,8 @@
               src={`${assets}/icons/${useCase.logo}`}
               class="w-12 hidden md:block"
             />
-            <h3 class={typography("h3")}>{useCase.title}</h3>
-            <p>{useCase.subtitle}</p>
+            <h3 class={typography("h3")}>{$t(useCase.title)}</h3>
+            <p>{$t(useCase.subtitle)}</p>
           </div>
         </div>
       {/each}
@@ -233,14 +240,14 @@
   <!-- features -->
   <div id="features" class={centeringContainerClass}>
     <div class="mt-12 md:mt-24 flex flex-col items-center gap-10 md:gap-20">
-      <h2 class={typography("h2")}>Key features</h2>
+      <h2 class={typography("h2")}>{$t("features_section.title")}</h2>
       <div class="grid grid-cols-2 md:grid-cols-4 md:grid-rows-2 gap-y-16 gap-x-6 mx-6">
         {#each featuresData as feature}
           <div class="flex flex-col text-center items-center gap-4">
             <img alt={`feature ${feature.logo}`} src={`${assets}/icons/${feature.logo}`} class="w-16" />
             <div>
-              <h4 class="text-xl font-urbanist font-medium">{feature.title}</h4>
-              <span>{feature.subtitle}</span>
+              <h4 class="text-xl font-urbanist font-medium">{$t(feature.title)}</h4>
+              <span>{$t(feature.subtitle)}</span>
             </div>
           </div>
         {/each}
@@ -260,7 +267,7 @@
             class={twMerge(typography("button-xl"), buttonPrimary, "mt-3 md:mr-9")}
             href={constructorHref}
           >
-            Create bot
+            {$t("create_bot")}
           </Button>
         </div>
       </div>
@@ -277,7 +284,7 @@
       <Link href="https://www.linkedin.com/in/sevenard/" class_="font-bold">Serendip.</Link>
     </span>
     <Link href={contactUsHref} class_="justify-self-end flex flex-row gap-3 items-center">
-      <span class="hidden md:inline">contact us</span>
+      <span class="hidden md:inline">{$t("contact_us_lowercase")}</span>
       <img alt="telegram logo" src={`${assets}/icons/telegram-dark.svg`} class="w-6" />
     </Link>
   </div>
