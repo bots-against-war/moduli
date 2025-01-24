@@ -159,13 +159,13 @@
     <div class={centeringContainerClass}>
       <img
         alt="background illustration (desktop)"
-        src={`${assets}/main-bg-desktop-en.png`}
+        src={`${assets}/main-bg-desktop-${$locale}.png`}
         class="w-full hidden md:block"
         style={`padding-top: ${Math.max((1280 - innerWidth) / 2.5, 0)}px`}
       />
       <img
         alt="background illustration (mobile)"
-        src={`${assets}/main-1-mobile-en.png`}
+        src={`${assets}/main-1-mobile-${$locale}.png`}
         class="w-full block md:hidden"
         style="padding-top: 80px;"
       />
@@ -201,14 +201,14 @@
           </Link>
         </div>
       </div>
-      <img alt="background" src={`${assets}/main-2-mobile-en.png`} class="w-full block md:hidden" />
+      <img alt="background" src={`${assets}/main-2-mobile-${$locale}.png`} class="w-full block md:hidden" />
     </div>
   </div>
 
   <!-- use cases -->
   <div id="use-cases" class={centeringContainerClass}>
-    <div class="flex flex-col items-center gap-10 md:gap-20">
-      <h2 class={typography("h2")}>{$t("use_cases_section.title")}</h2>
+    <div class="flex flex-col items-center gap-14 md:gap-20">
+      <h2 class={twMerge(typography("h2"), "text-center")}>{$t("use_cases_section.title")}</h2>
 
       {#each useCasesData as useCase, idx}
         <div
@@ -217,7 +217,7 @@
         >
           <img
             alt="use case 1: feedback"
-            src={`${assets}/usecase-${idx + 1}-en.jpg`}
+            src={`${assets}/usecase-${idx + 1}-${$locale}.jpg`}
             class="md:w-[55%] rounded-lg md:rounded-3xl"
           />
           <div

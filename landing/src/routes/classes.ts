@@ -34,7 +34,7 @@ export function typography(t: TypographyType): string {
       classes.push("text-2xl md:text-4xl");
       break;
     case "h3":
-      classes.push("text-xl md:text-3xl");
+      classes.push("text-xl md:text-2xl");
       break;
     case "button-xl":
       classes.push("text-lg");

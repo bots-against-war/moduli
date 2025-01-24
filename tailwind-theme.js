@@ -1,7 +1,8 @@
 export default {
   extend: {
     fontFamily: {
-      urbanist: "Urbanist, Arial, sans-serif",
+      // urbanist: "Urbanist, Montserrat, Arial, sans-serif",
+      urbanist: "Montserrat, Arial, sans-serif",
     },
     boxShadow: {
       "secondary-btn": "2px 3px 14px 0px #1A1A1A20",
