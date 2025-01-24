@@ -22,6 +22,8 @@ export function typography(t: TypographyType): string {
     classes.push("font-bold");
   } else if (t == "h3" || t.startsWith("button")) {
     classes.push("font-semibold");
+  } else if (t == "menu-bold") {
+    classes.push("font-medium");
   }
 
   switch (t) {
@@ -47,4 +49,4 @@ export function typography(t: TypographyType): string {
 
 export const buttonPrimary = "bg-gray-900 text-white hover:bg-gray-50 hover:text-gray-900";
 export const buttonSecondary = "bg-white text-gray-900 hover:bg-gray-200 shadow-secondary-btn";
-export const buttonLink = "text-gray-900 p-0";
+export const buttonLink = "text-gray-900 p-0 hover:underline";
