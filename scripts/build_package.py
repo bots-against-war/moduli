@@ -57,7 +57,7 @@ shutil.copytree(FRONTEND_BUILD_DIR, STATIC_FILES_DIR)
 
 
 print(delimiter)
-print(f"Building landing page")
+print("Building landing page")
 vite2_cmd = ["npx", "vite", "build"]
 print("Running\n$ " + " ".join(vite2_cmd))
 subprocess.run(vite2_cmd, env={"BASE_PATH": BASE_PATH, **os.environ}, check=True, cwd=LANDING_DIR)
