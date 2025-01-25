@@ -56,7 +56,7 @@ async def constructor_app() -> AsyncGenerator[tuple[TelebotConstructorApp, aioht
     with tempfile.TemporaryDirectory() as tempdir:
         telebot_constructor_app = TelebotConstructorApp(
             redis=redis,
-            auth=NoAuth(),
+            auth=NoAuth(owner_chat_id=0),
             secret_store=RedisSecretStore(
                 redis,
                 encryption_key=Fernet.generate_key().decode("utf-8"),

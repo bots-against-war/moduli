@@ -74,7 +74,7 @@ async def main() -> None:
         )
     elif auth_type == "NOOP":
         logging.info("Using noop auth")
-        auth = NoAuth()
+        auth = NoAuth(owner_chat_id=int(os.environ["OWNER_CHAT_ID"]))
     else:
         raise ValueError(f"Unexpected auth type: {auth_type!r}")
 

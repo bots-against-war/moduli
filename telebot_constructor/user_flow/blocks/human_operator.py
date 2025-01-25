@@ -43,11 +43,13 @@ class FeedbackHandlerConfig(BaseModel):
 
     # hashtags config
     hashtags_in_admin_chat: bool
-    unanswered_hashtag: Optional[str]
-    hashtag_message_rarer_than: Optional[datetime.timedelta]
+    unanswered_hashtag: str | None
+    hashtag_message_rarer_than: datetime.timedelta | None
 
     # /log cmd config
     message_log_to_admin_chat: bool
+
+    confirm_forwarded_to_admin_rarer_than: datetime.timedelta | None = None
 
 
 class HumanOperatorBlock(UserFlowBlock):
@@ -96,7 +98,9 @@ class HumanOperatorBlock(UserFlowBlock):
                 hashtags_in_admin_chat=self.feedback_handler_config.hashtags_in_admin_chat,
                 hashtag_message_rarer_than=self.feedback_handler_config.hashtag_message_rarer_than,
                 unanswered_hashtag=self.feedback_handler_config.unanswered_hashtag,
-                confirm_forwarded_to_admin_rarer_than=None,
+                confirm_forwarded_to_admin_rarer_than=(
+                    self.feedback_handler_config.confirm_forwarded_to_admin_rarer_than
+                ),
                 user_anonymization=(
                     UserAnonymization.FULL if self.feedback_handler_config.anonimyze_users else UserAnonymization.NONE
                 ),

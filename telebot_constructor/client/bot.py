@@ -1,3 +1,4 @@
+import datetime
 import enum
 import logging
 import os
@@ -13,7 +14,6 @@ from telebot.runner import BotRunner
 from telebot_components.form.field import (
     BadFieldValueError,
     FormField,
-    IntegerField,
     MessageProcessingResult,
     PlainTextField,
     SingleSelectField,
@@ -102,12 +102,6 @@ moduli_client_form = Form.branching(
             query_message="Введите приветственное сообщение.",
             empty_text_error_msg="Сообщение не может быть пустым!",
         ),
-        IntegerField(  # TODO: chat discovery
-            name="admin_chat_id",
-            required=True,
-            query_message="Введите id админ-чата.",
-            not_an_integer_error_msg="id админ чата должно быть числом",
-        ),
         SingleSelectField(
             name="anonymize",
             required=True,
@@ -158,6 +152,7 @@ def setup_moduli_bot(
         user = context.last_update.from_user
 
         token = context.result["token"]
+        anonymize_users = context.result["anonymize"] is AnonymizeUsers.YES
         bot_name = await load_bot_display_name(token)
         if bot_name is None:
             await bot.send_message(
@@ -209,10 +204,15 @@ def setup_moduli_bot(
                             feedback_handler_config=FeedbackHandlerConfig(
                                 admin_chat_id=context.result["admin_chat_id"],
                                 forum_topic_per_user=False,
-                                anonimyze_users=context.result["anonymize"] is AnonymizeUsers.YES,
+                                anonimyze_users=anonymize_users,
                                 max_messages_per_minute=15,
                                 messages_to_user=MessagesToUser(
-                                    forwarded_to_admin_ok="Переслано!",
+                                    forwarded_to_admin_ok=(
+                                        "Переслано с сохранением анонимности! Для полной безопасности "
+                                        + "вы можете удалить переписку со своей стороны."
+                                        if anonymize_users
+                                        else "Переслано!"
+                                    ),
                                     throttling="Не присылайте больше {} сообщений в минуту!",
                                 ),
                                 messages_to_admin=MessagesToAdmin(
@@ -224,6 +224,9 @@ def setup_moduli_bot(
                                 unanswered_hashtag=None,
                                 hashtag_message_rarer_than=None,
                                 message_log_to_admin_chat=False,
+                                confirm_forwarded_to_admin_rarer_than=(
+                                    datetime.timedelta(hours=1) if anonymize_users else None
+                                ),
                             ),
                             catch_all=False,
                         ),
