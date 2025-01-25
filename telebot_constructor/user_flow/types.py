@@ -79,7 +79,7 @@ GetActiveUserFlowBlockId = Callable[[int], Awaitable[Optional[UserFlowBlockId]]]
 @dataclass(frozen=True)
 class BotCommandInfo:
     command: tg.BotCommand
-    scope: Optional[tg.BotCommandScope]
+    scope: tg.BotCommandScope | None
 
     def __str__(self) -> str:
         args_str = f"command={self.command.to_json()}"

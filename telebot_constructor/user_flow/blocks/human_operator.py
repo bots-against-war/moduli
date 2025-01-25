@@ -134,7 +134,7 @@ class HumanOperatorBlock(UserFlowBlock):
 
         await self._feedback_handler.setup(context.bot)
 
-        admin_chat_cmd_scope = tg.BotCommandScopeChat(chat_id=self.feedback_handler_config.admin_chat_id)
+        admin_chat_cmd_scope = tg.BotCommandScopeChat(chat_id=admin_chat_id)
         return SetupResult(
             background_jobs=self._feedback_handler.background_jobs(base_url=None, server_listening_future=None),
             aux_endpoints=await self._feedback_handler.aux_endpoints(),

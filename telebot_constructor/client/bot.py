@@ -4,7 +4,7 @@ import logging
 import os
 import uuid
 from dataclasses import dataclass
-from typing import Any, TypedDict
+from typing import Any, Awaitable, Callable, TypedDict
 
 import aiohttp
 from slugify import slugify
@@ -117,21 +117,21 @@ moduli_client_form = Form.branching(
 class ModuliClientFormResult(TypedDict):
     token: str
     welcome: str
-    admin_chat_id: int
     anonymize: AnonymizeUsers
 
 
 moduli_client_form.validate_result_type(ModuliClientFormResult)
 
 
-def setup_moduli_bot(
+def moduli_bot_form_handler(
     bot: AsyncTeleBot,
     bot_prefix: str,
     redis: RedisInterface,
-    main_flow_cmd: str,
     api: TrustedModuliApiClient,
-) -> None:
+    after: Callable[[tg.User], Awaitable[Any]] | None = None,
+) -> FormHandler:
     """Simple bot interface to telebot constructor, providing livegram-like frontend to create feedback bots"""
+
     form_handler = FormHandler[ModuliClientFormResult, Any](
         redis=redis,
         bot_prefix=bot_prefix,
@@ -202,7 +202,7 @@ def setup_moduli_bot(
                         human_operator=HumanOperatorBlock(
                             block_id=feedback_block_id,
                             feedback_handler_config=FeedbackHandlerConfig(
-                                admin_chat_id=context.result["admin_chat_id"],
+                                admin_chat_id=None,
                                 forum_topic_per_user=False,
                                 anonimyze_users=anonymize_users,
                                 max_messages_per_minute=15,
@@ -253,18 +253,21 @@ def setup_moduli_bot(
             await bot.send_message(user.id, "Не получилось создать бота...")
             return
         await bot.send_message(user.id, "Бот создан, ура!")
+        if after is not None:
+            await after(user)
 
     async def cancel_form(context: FormExitContext) -> None:
+        user = context.last_update.from_user
         await bot.send_message(
-            chat_id=context.last_update.from_user.id,
+            chat_id=user.id,
             text="Приходите в другой раз",
         )
+        if after is not None:
+            await after(user)
 
-    form_handler.setup(bot, on_form_completed=complete_form, on_form_cancelled=complete_form)
+    form_handler.setup(bot, on_form_completed=complete_form, on_form_cancelled=cancel_form)
 
-    @bot.message_handler(commands=[main_flow_cmd])
-    async def start_form(m: tg.Message) -> None:
-        await form_handler.start(bot, m.from_user)
+    return form_handler
 
 
 if __name__ == "__main__":
@@ -279,7 +282,7 @@ if __name__ == "__main__":
 
         token = os.environ["MODULI_CLIENT_BOT_TOKEN"]
         bot = AsyncTeleBot(token=token)
-        bot_prefix = "modulie-client-test"
+        bot_prefix = "moduli-client-test"
         print(await bot.get_me())
 
         async with aiohttp.ClientSession() as session:
@@ -290,13 +293,16 @@ if __name__ == "__main__":
             )
             await api.ping()
 
-            setup_moduli_bot(
+            form_handler = moduli_bot_form_handler(
                 bot,
                 bot_prefix=bot_prefix,
                 redis=redis,
-                main_flow_cmd="start",
                 api=api,
             )
+
+            @bot.message_handler(commands=["start"])
+            async def start_form(m: tg.Message) -> None:
+                await form_handler.start(bot, m.from_user)
 
             runner = BotRunner(bot_prefix=bot_prefix, bot=bot)
             await runner.run_polling()

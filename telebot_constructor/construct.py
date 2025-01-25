@@ -119,12 +119,15 @@ async def construct_bot(
     ):
         command_info_batch = list(scoped_commands_it)
         logger.info(f"Bot command batch: {'; '.join(str(bc) for bc in command_info_batch)}")
-        async for attempt in rate_limit_retry():
-            with attempt:
-                await bot.set_my_commands(
-                    commands=[cmd.command for cmd in command_info_batch],
-                    scope=command_info_batch[0].scope,
-                )
+        try:
+            async for attempt in rate_limit_retry():
+                with attempt:
+                    await bot.set_my_commands(
+                        commands=[cmd.command for cmd in command_info_batch],
+                        scope=command_info_batch[0].scope,
+                    )
+        except Exception:
+            logger.exception("Error setting bot commands")
 
     if group_chat_discovery_handler is not None:
         group_chat_discovery_handler.setup_handlers(owner_id=owner_id, bot_id=bot_id, bot=bot)
