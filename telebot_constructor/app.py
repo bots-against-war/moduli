@@ -179,12 +179,12 @@ class TelebotConstructorApp:
         return res
 
     # used for bot user and bot names
-    VALID_NAME_RE = re.compile(r"^[0-9a-zA-Z\-_]{3,64}$")
+    VALID_NAME_RE = re.compile(r"^[0-9a-zA-Z\-_]{3,96}$")
 
     def _validate_name(self, name: str) -> None:
         if not self.VALID_NAME_RE.match(name):
             raise web.HTTPBadRequest(
-                reason="Name must be 3-64 characters long and include only alphanumerics, hyphens and dashes"
+                reason="Name must be 3-96 characters long and include only alphanumerics, hyphens and dashes"
             )
 
     def parse_path_part(self, request: web.Request, part_name: str) -> str:
@@ -389,6 +389,7 @@ class TelebotConstructorApp:
         ##################################################################################
         # region secrets API
 
+        # TODO: dedicated token saving method with additional validation
         @routes.post("/api/secrets/{secret_name}")
         async def upsert_secret(request: web.Request) -> web.Response:
             """
@@ -1162,6 +1163,10 @@ class TelebotConstructorApp:
                 body=user.model_dump_json(),
                 content_type="application/json",
             )
+
+        @routes.get("/api/ping")
+        async def ping(request: web.Request) -> web.Response:
+            return web.Response(text="pong")
 
         @routes.get("/api/media-store-check")
         async def check_media_store_configured(request: web.Request) -> web.Response:
