@@ -28,6 +28,7 @@ async def test_construct_empty_bot() -> None:
         form_results_store=dummy_form_results_store(),
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
+        owner_chat_id=0,
         redis=redis,
         _bot_factory=MockedAsyncTeleBot,
     )
@@ -45,6 +46,7 @@ async def test_missing_token_secret() -> None:
             form_results_store=dummy_form_results_store(),
             errors_store=dummy_errors_store(),
             secret_store=dummy_secret_store(redis),
+            owner_chat_id=0,
             redis=redis,
             _bot_factory=MockedAsyncTeleBot,
         )
@@ -68,6 +70,7 @@ async def test_bot_token_validation_failed() -> None:
                 ),
                 form_results_store=dummy_form_results_store(),
                 errors_store=dummy_errors_store(),
+                owner_chat_id=0,
                 secret_store=secret_store,
                 redis=redis,
             )

@@ -106,9 +106,6 @@ class TelegramAuth(Auth):
             self.bot_username = bot_user.username
         return self.bot_username
 
-    def user_id(self, tg_user_id: int) -> str:
-        return f"telegram_user_{tg_user_id}"
-
     def authenticate_from_trusted_client(self, request: web.Request) -> Optional[LoggedInUser]:
         if not self.trusted_client_tokens:
             return None
@@ -124,7 +121,7 @@ class TelegramAuth(Auth):
             return None
         return LoggedInUser(
             auth_type=AuthType.TELEGRAM_AUTH,
-            username=self.user_id(tg_user_id),
+            username=user_id(tg_user_id),
             name="<unused>",
             display_username="<unused>",
             userpic=None,
@@ -146,7 +143,7 @@ class TelegramAuth(Auth):
         logger.info("Auth OK")
         return LoggedInUser(
             auth_type=AuthType.TELEGRAM_AUTH,
-            username=self.user_id(tg_user_data.id),
+            username=user_id(tg_user_data.id),
             name=tg_user_data.full_name,
             display_username=tg_user_data.username,
             userpic=(
@@ -225,3 +222,14 @@ class TelegramAuth(Auth):
             return None
         else:
             return BotRunner(bot_prefix="telegram-auth-bot", bot=self.bot, background_jobs=[])
+
+    def owner_chat_id(self, user_id: str) -> int:
+        return parse_tg_user_id(user_id)
+
+
+def user_id(tg_user_id: int) -> str:
+    return f"telegram_user_{tg_user_id}"
+
+
+def parse_tg_user_id(user_id: str) -> int:
+    return int(user_id.removeprefix("telegram_user_"))

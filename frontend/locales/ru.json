@@ -386,7 +386,8 @@
       "anti_spam_msg_per_min": "Сколько сообщений в минуту может писать пользователь:ница",
       "anti_spam_msg_per_min_descr": "После превышения будет примененён временный \"мягкий бан\"",
       "anti_spam_warning_title": "Предупреждение о превышении",
-      "anti_spam_warning_placeholder": "Не присылайте больше {} сообщений в минуту!"
+      "anti_spam_warning_placeholder": "Не присылайте больше {} сообщений в минуту!",
+      "in_private_messages": "В личных сообщениях"
     },
     "language_select": {
       "message_text_label": "Текст",

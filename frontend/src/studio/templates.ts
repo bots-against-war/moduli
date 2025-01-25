@@ -1,7 +1,7 @@
 import type { CommandEntryPoint, UserFlowConfig } from "../api/types";
 import { DEFAULT_START_COMMAND_ENTRYPOINT_ID } from "../constants";
 import { generateFormFieldId, generateOptionId } from "./nodes/FormBlock/utils";
-import { generateFormName, PLACEHOLDER_GROUP_CHAT_ID } from "./nodes/defaultConfigs";
+import { generateFormName } from "./nodes/defaultConfigs";
 import { NodeTypeKey } from "./nodes/display";
 import { boundingBox, generateNodeId, NodeKind } from "./utils";
 
@@ -183,7 +183,7 @@ export function basicShowcaseTemplate(): Template {
             block_id: operatorBlockId,
             catch_all: false,
             feedback_handler_config: {
-              admin_chat_id: PLACEHOLDER_GROUP_CHAT_ID,
+              admin_chat_id: null,
               forum_topic_per_user: false,
               anonimyze_users: true,
               max_messages_per_minute: 20,

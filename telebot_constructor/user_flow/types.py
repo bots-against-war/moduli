@@ -27,10 +27,11 @@ class UserFlowSetupContext:
     form_results_store: BotSpecificFormResultsStore
     errors_store: BotSpecificErrorsStore
     language_store: Optional[LanguageStore]
-    feedback_handlers: dict[AnyChatId, FeedbackHandler]
+    feedback_handlers: dict[AnyChatId | None, FeedbackHandler]
     enter_block: "EnterUserFlowBlockCallback"
     get_active_block_id: "GetActiveUserFlowBlockId"
     media_store: UserSpecificMediaStore | None
+    owner_chat_id: int  # Telegram chat somehow associated with the bot owner
 
     def make_instrumented_logger(self, module_name: str) -> logging.Logger:
         logger = logging.getLogger(module_name + f"[{self.bot_prefix}]")

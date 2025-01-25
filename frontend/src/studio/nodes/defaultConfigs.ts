@@ -33,8 +33,6 @@ export const defaultContentBlockConfig: ConfigFactory = (id: string, t: MessageF
   };
 };
 
-export const PLACEHOLDER_GROUP_CHAT_ID = 0;
-
 export const defaultHumanOperatorBlockConfig: ConfigFactory = (
   id: string,
   t: MessageFormatter,
@@ -47,7 +45,7 @@ export const defaultHumanOperatorBlockConfig: ConfigFactory = (
       block_id: id,
       catch_all: false,
       feedback_handler_config: {
-        admin_chat_id: PLACEHOLDER_GROUP_CHAT_ID,
+        admin_chat_id: null,
         forum_topic_per_user: false,
         anonimyze_users: true,
         max_messages_per_minute: 10,

@@ -30,6 +30,11 @@ class Auth(abc.ABC):
         """Auth-specific response to the client; not used for API routes, only for browser clients"""
         ...
 
+    @abc.abstractmethod
+    def owner_chat_id(self, user_id: str) -> int:
+        """Telegram chat somehow associated with an authorized user"""
+        ...
+
     async def setup_routes(self, app: web.Application) -> None:
         """Optional setup hook for subclasses to override to add their login API routes"""
         ...
@@ -45,16 +50,24 @@ class NoAuth(Auth):
     Useful when running in a private network or during development.
     """
 
-    def __init__(self, username: str = "no-auth") -> None:
-        self.username = username
+    def __init__(
+        self,
+        owner_chat_id: int,
+        username: str = "no-auth",
+    ) -> None:
+        self._user_id = username
+        self._owner_chat_id = owner_chat_id
 
     async def authenticate_request(self, request: web.Request) -> Optional[LoggedInUser]:
         return LoggedInUser(
-            username=self.username,
+            username=self._user_id,
             name="Anonymous user",
             auth_type=AuthType.NO_AUTH,
             userpic=None,
         )
+
+    def owner_chat_id(self, user_id: str) -> int:
+        return self._owner_chat_id
 
     async def unauthenticated_client_response(self, request: web.Request, static_files_dir: Path) -> web.Response:
         raise NotImplementedError()
@@ -100,6 +113,9 @@ class GroupChatAuth(Auth):
             dumper=lambda x: "null",
             loader=lambda x: None,
         )
+
+    def owner_chat_id(self, user_id: str) -> int:
+        return self.auth_chat_id
 
     async def get_auth_chat(self) -> tg.Chat:
         if self._auth_chat is None:

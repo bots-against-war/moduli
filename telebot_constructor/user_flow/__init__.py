@@ -180,6 +180,7 @@ class UserFlow:
         form_results_store: BotSpecificFormResultsStore,
         errors_store: BotSpecificErrorsStore,
         media_store: UserSpecificMediaStore | None,
+        owner_chat_id: int,
     ) -> SetupResult:
         self._active_block_id_store = KeyValueStore[str](
             name="user-flow-active-block",
@@ -201,9 +202,10 @@ class UserFlow:
             banned_users_store=banned_users_store,
             media_store=media_store,
             feedback_handlers=dict(),
-            language_store=None,
+            language_store=None,  # set later, when landuage select blocks are set up
             enter_block=self._enter_block,
             get_active_block_id=self._get_active_block_id,
+            owner_chat_id=owner_chat_id,
         )
         setup_block_ids: set[str] = set()
 
@@ -220,7 +222,7 @@ class UserFlow:
             setup_block_ids.add(ho_block.block_id)
             setup_result.merge(await ho_block.setup(context=setup_context))
             # saving feedback handler to global context for other blocks to use
-            setup_context.feedback_handlers[ho_block.feedback_handler.admin_chat_id] = ho_block.feedback_handler
+            setup_context.feedback_handlers[ho_block.feedback_handler_config.admin_chat_id] = ho_block.feedback_handler
             setup_block_ids.add(ho_block.block_id)
 
         for idx, entrypoint in enumerate(self.entrypoints):

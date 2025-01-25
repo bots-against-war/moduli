@@ -309,6 +309,7 @@ class TelebotConstructorApp:
             ),
             redis=self.redis,
             group_chat_discovery_handler=self.group_chat_discovery_handler,
+            owner_chat_id=self.auth.owner_chat_id(owner_id),
             media_store=self.media_store.adapter_for(owner_id) if self.media_store else None,
             _bot_factory=self._bot_factory,
         )

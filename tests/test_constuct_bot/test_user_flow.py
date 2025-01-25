@@ -97,6 +97,7 @@ async def test_simple_user_flow() -> None:
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
         redis=redis,
+        owner_chat_id=0,
         _bot_factory=MockedAsyncTeleBot,
     )
     assert not bot_runner.background_jobs
@@ -186,6 +187,7 @@ async def test_flow_with_human_operator(catch_all: bool) -> None:
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
         redis=redis,
+        owner_chat_id=0,
         _bot_factory=MockedAsyncTeleBot,
     )
 
@@ -312,6 +314,7 @@ async def test_catch_all_entrypoint() -> None:
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
         redis=redis,
+        owner_chat_id=0,
         _bot_factory=MockedAsyncTeleBot,
     )
 
@@ -385,6 +388,7 @@ async def test_regex_match_entrypoint() -> None:
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
         redis=redis,
+        owner_chat_id=0,
         _bot_factory=MockedAsyncTeleBot,
     )
 
@@ -535,6 +539,7 @@ async def test_multilang_user_flow() -> None:
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
         redis=redis,
+        owner_chat_id=0,
         _bot_factory=MockedAsyncTeleBot,
     )
     assert not bot_runner.background_jobs
@@ -622,6 +627,7 @@ async def test_no_infinte_loop_flow() -> None:
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
         redis=redis,
+        owner_chat_id=0,
         _bot_factory=MockedAsyncTeleBot,
     )
     assert not bot_runner.background_jobs

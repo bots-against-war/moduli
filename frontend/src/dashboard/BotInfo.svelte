@@ -170,7 +170,7 @@
             label={$t("dashboard.alert_chat")}
             {botId}
             bind:selectedGroupChatId={editedAlertChatId}
-            allowEmptyState
+            allowNoChat
             forbidLegacyGroups={false}
           >
             <svelte:fragment slot="delete-chat-id-option">{$t("dashboard.disable_alert_chat")}</svelte:fragment>

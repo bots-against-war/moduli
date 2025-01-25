@@ -108,6 +108,7 @@ async def test_markdown_text(markdown_text: str, expected_sent: str) -> None:
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
         redis=redis,
+        owner_chat_id=0,
         _bot_factory=MockedAsyncTeleBot,
     )
 
@@ -187,6 +188,7 @@ async def test_single_photo() -> None:
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
         redis=redis,
+        owner_chat_id=0,
         media_store=media_store.adapter_for(owner_id),
         # for tests we use "mocked" bot class instead of the real one; it will not make any requests
         # to Telegram, but store calls so that we can check them as part of the test (see below)
@@ -312,6 +314,7 @@ async def test_media_store_error_fallback(media_store_configured: bool) -> None:
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
         redis=redis,
+        owner_chat_id=0,
         media_store=RedisMediaStore(redis).adapter_for(owner_id) if media_store_configured else None,
         _bot_factory=MockedAsyncTeleBot,
     )
@@ -357,6 +360,7 @@ async def test_multiple_photos() -> None:
             errors_store=dummy_errors_store(),
             secret_store=secret_store,
             redis=redis,
+            owner_chat_id=0,
             media_store=media_store.adapter_for(owner_id),
             _bot_factory=MockedAsyncTeleBot,
         )

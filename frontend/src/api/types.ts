@@ -30,7 +30,7 @@ export type Contents = Content[];
 export type NextBlockId3 = string | null;
 export type BlockId1 = string;
 export type CatchAll = boolean;
-export type AdminChatId = number;
+export type AdminChatId = number | null;
 export type ForumTopicPerUser = boolean;
 export type AnonimyzeUsers = boolean;
 export type MaxMessagesPerMinute = number;
@@ -154,7 +154,7 @@ export type UnsupportedCommand =
     };
 export type FormResultUserAttribution = "none" | "unique_id" | "name" | "full";
 export type EchoToUser = boolean;
-export type ChatId = string | number;
+export type ChatId = string | number | null;
 export type ViaFeedbackHandler = boolean;
 export type ToStore = boolean;
 export type IsAnonymous = boolean | null;

@@ -33,7 +33,7 @@ class MessagesToAdmin(BaseModel):
 
 
 class FeedbackHandlerConfig(BaseModel):
-    admin_chat_id: int
+    admin_chat_id: int | None
     forum_topic_per_user: bool
     anonimyze_users: bool
     max_messages_per_minute: float
@@ -84,9 +84,10 @@ class HumanOperatorBlock(UserFlowBlock):
                 active_block_id = await context.get_active_block_id(message.from_user.id)
                 return active_block_id == self.block_id
 
+        admin_chat_id = self.feedback_handler_config.admin_chat_id or context.owner_chat_id
         self._feedback_handler = FeedbackHandler(
-            admin_chat_id=self.feedback_handler_config.admin_chat_id,
-            name=f"fh-{self.feedback_handler_config.admin_chat_id}",
+            admin_chat_id=admin_chat_id,
+            name=f"fh-{admin_chat_id}",
             redis=context.redis,
             bot_prefix=context.bot_prefix,
             config=FeedbackConfig(
