@@ -208,7 +208,7 @@ def setup_moduli_bot(
                                 max_messages_per_minute=15,
                                 messages_to_user=MessagesToUser(
                                     forwarded_to_admin_ok=(
-                                        "Переслано с сохранением анонимности! Для полной безопасности "
+                                        "Переслано с сохранением вашей анонимности! Для полной безопасности "
                                         + "вы можете удалить переписку со своей стороны."
                                         if anonymize_users
                                         else "Переслано!"
