@@ -33,7 +33,7 @@ class MessagesToAdmin(BaseModel):
 
 
 class FeedbackHandlerConfig(BaseModel):
-    admin_chat_id: int
+    admin_chat_id: int | None
     forum_topic_per_user: bool
     anonimyze_users: bool
     max_messages_per_minute: float
@@ -43,11 +43,13 @@ class FeedbackHandlerConfig(BaseModel):
 
     # hashtags config
     hashtags_in_admin_chat: bool
-    unanswered_hashtag: Optional[str]
-    hashtag_message_rarer_than: Optional[datetime.timedelta]
+    unanswered_hashtag: str | None
+    hashtag_message_rarer_than: datetime.timedelta | None
 
     # /log cmd config
     message_log_to_admin_chat: bool
+
+    confirm_forwarded_to_admin_rarer_than: datetime.timedelta | None = None
 
 
 class HumanOperatorBlock(UserFlowBlock):
@@ -84,9 +86,10 @@ class HumanOperatorBlock(UserFlowBlock):
                 active_block_id = await context.get_active_block_id(message.from_user.id)
                 return active_block_id == self.block_id
 
+        admin_chat_id = self.feedback_handler_config.admin_chat_id or context.owner_chat_id
         self._feedback_handler = FeedbackHandler(
-            admin_chat_id=self.feedback_handler_config.admin_chat_id,
-            name=f"fh-{self.feedback_handler_config.admin_chat_id}",
+            admin_chat_id=admin_chat_id,
+            name=f"fh-{admin_chat_id}",
             redis=context.redis,
             bot_prefix=context.bot_prefix,
             config=FeedbackConfig(
@@ -95,7 +98,9 @@ class HumanOperatorBlock(UserFlowBlock):
                 hashtags_in_admin_chat=self.feedback_handler_config.hashtags_in_admin_chat,
                 hashtag_message_rarer_than=self.feedback_handler_config.hashtag_message_rarer_than,
                 unanswered_hashtag=self.feedback_handler_config.unanswered_hashtag,
-                confirm_forwarded_to_admin_rarer_than=None,
+                confirm_forwarded_to_admin_rarer_than=(
+                    self.feedback_handler_config.confirm_forwarded_to_admin_rarer_than
+                ),
                 user_anonymization=(
                     UserAnonymization.FULL if self.feedback_handler_config.anonimyze_users else UserAnonymization.NONE
                 ),
@@ -129,7 +134,7 @@ class HumanOperatorBlock(UserFlowBlock):
 
         await self._feedback_handler.setup(context.bot)
 
-        admin_chat_cmd_scope = tg.BotCommandScopeChat(chat_id=self.feedback_handler_config.admin_chat_id)
+        admin_chat_cmd_scope = tg.BotCommandScopeChat(chat_id=admin_chat_id)
         return SetupResult(
             background_jobs=self._feedback_handler.background_jobs(base_url=None, server_listening_future=None),
             aux_endpoints=await self._feedback_handler.aux_endpoints(),

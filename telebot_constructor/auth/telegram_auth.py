@@ -15,6 +15,10 @@ from telebot_components.stores.generic import KeyValueStore
 
 from telebot_constructor.app_models import AuthType, LoggedInUser
 from telebot_constructor.auth.auth import Auth
+from telebot_constructor.constants import (
+    TRUSTED_CLIENT_TOKEN_HEADER,
+    TRUSTED_CLIENT_USER_ID_HEADER,
+)
 from telebot_constructor.static import static_file_content
 from telebot_constructor.telegram_files_downloader import TelegramFilesDownloader
 from telebot_constructor.utils.rate_limit_retry import rate_limit_retry
@@ -59,11 +63,13 @@ class TelegramAuth(Auth):
         bot_is_run_externally: bool = False,
         confirmation_timeout: datetime.timedelta = datetime.timedelta(minutes=10),
         access_token_lifetime: datetime.timedelta = datetime.timedelta(days=1),
+        trusted_client_tokens: list[str] | None = None,
     ):
         self.bot = bot
         self.bot_username: Optional[str] = None
         self.telegram_files_downloader = telegram_files_downloader
         self.bot_is_run_externally = bot_is_run_externally
+        self.trusted_client_tokens = trusted_client_tokens or []
 
         self.tg_user_data_by_access_code_store = KeyValueStore[TelegramUserData](
             name="tg-user-info",
@@ -100,9 +106,32 @@ class TelegramAuth(Auth):
             self.bot_username = bot_user.username
         return self.bot_username
 
+    def authenticate_from_trusted_client(self, request: web.Request) -> Optional[LoggedInUser]:
+        if not self.trusted_client_tokens:
+            return None
+        token = request.headers.get(TRUSTED_CLIENT_TOKEN_HEADER)
+        if not token or token not in self.trusted_client_tokens:
+            return None
+        tg_user_id_str = request.headers.get(TRUSTED_CLIENT_USER_ID_HEADER)
+        if not tg_user_id_str:
+            return None
+        try:
+            tg_user_id = int(tg_user_id_str)
+        except Exception:
+            return None
+        return LoggedInUser(
+            auth_type=AuthType.TELEGRAM_AUTH,
+            username=user_id(tg_user_id),
+            name="<unused>",
+            display_username="<unused>",
+            userpic=None,
+        )
+
     ACCESS_TOKEN_COOKIE_NAME = "tc_access_token"
 
     async def authenticate_request(self, request: web.Request) -> Optional[LoggedInUser]:
+        if user := self.authenticate_from_trusted_client(request):
+            return user
         access_token = request.cookies.get(self.ACCESS_TOKEN_COOKIE_NAME)
         if access_token is None:
             logger.info("No auth cookie found in the request")
@@ -114,7 +143,7 @@ class TelegramAuth(Auth):
         logger.info("Auth OK")
         return LoggedInUser(
             auth_type=AuthType.TELEGRAM_AUTH,
-            username=f"telegram_user_{tg_user_data.id}",
+            username=user_id(tg_user_data.id),
             name=tg_user_data.full_name,
             display_username=tg_user_data.username,
             userpic=(
@@ -193,3 +222,14 @@ class TelegramAuth(Auth):
             return None
         else:
             return BotRunner(bot_prefix="telegram-auth-bot", bot=self.bot, background_jobs=[])
+
+    def owner_chat_id(self, user_id: str) -> int:
+        return parse_tg_user_id(user_id)
+
+
+def user_id(tg_user_id: int) -> str:
+    return f"telegram_user_{tg_user_id}"
+
+
+def parse_tg_user_id(user_id: str) -> int:
+    return int(user_id.removeprefix("telegram_user_"))

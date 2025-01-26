@@ -1,12 +1,10 @@
 <script lang="ts">
-  import { Li, List, Select, Toggle } from "flowbite-svelte";
+  import { Select, Toggle } from "flowbite-svelte";
   import { t } from "svelte-i18n";
   import type { FormResultUserAttribution, FormResultsExport } from "../../../../api/types";
-  import BotUserBadge from "../../../../components/BotUserBadge.svelte";
   import GroupChatIdSelect from "../../../../components/GroupChatIdSelect.svelte";
   import InputWrapper from "../../../../components/inputs/InputWrapper.svelte";
   import BlockNameInline from "../../../components/BlockNameInline.svelte";
-  import { PLACEHOLDER_GROUP_CHAT_ID } from "../../defaultConfigs";
   import { NodeTypeKey } from "../../display";
 
   export let config: FormResultsExport;
@@ -46,7 +44,7 @@
         on:change={(e) => {
           // @ts-expect-error
           if (e.target.checked) {
-            config.to_chat = { chat_id: PLACEHOLDER_GROUP_CHAT_ID, via_feedback_handler: false };
+            config.to_chat = { chat_id: null, via_feedback_handler: false };
           } else {
             config.to_chat = null;
           }
@@ -60,6 +58,7 @@
             {botId}
             bind:selectedGroupChatId={config.to_chat.chat_id}
             forbidLegacyGroups={false}
+            allowNoChat
           />
           <InputWrapper label={$t("studio.form.chat_feedback_mode")} required={false}>
             <Toggle bind:checked={config.to_chat.via_feedback_handler}>{$t("studio.form.chat_feedback_mode_on")}</Toggle

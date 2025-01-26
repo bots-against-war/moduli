@@ -99,6 +99,7 @@ async def test_flow_with_menu() -> None:
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
         redis=redis,
+        owner_chat_id=0,
         _bot_factory=MockedAsyncTeleBot,
     )
 
@@ -217,6 +218,7 @@ async def test_flow_with_nexted_menu() -> None:
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
         redis=redis,
+        owner_chat_id=0,
         _bot_factory=MockedAsyncTeleBot,
     )
 
@@ -366,6 +368,7 @@ async def test_multilevel_menu() -> None:
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
         redis=redis,
+        owner_chat_id=0,
         _bot_factory=MockedAsyncTeleBot,
     )
 
@@ -514,6 +517,7 @@ async def test_dag_menu() -> None:
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
         redis=redis,
+        owner_chat_id=0,
         _bot_factory=MockedAsyncTeleBot,
     )
 
@@ -727,6 +731,7 @@ async def test_rhombus_menu() -> None:
         form_results_store=dummy_form_results_store(),
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
+        owner_chat_id=0,
         redis=redis,
         _bot_factory=MockedAsyncTeleBot,
     )

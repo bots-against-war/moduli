@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "svelte-i18n";
   import { Node } from "svelvet";
   import type { HumanOperatorBlock } from "../../../api/types";
   import GroupChatBadge from "../../../components/GroupChatBadge.svelte";
@@ -43,6 +44,10 @@
     on:clone
     on:edit={openEditModal}
   >
-    <GroupChatBadge {botId} chatId={config.feedback_handler_config.admin_chat_id} />
+    {#if config.feedback_handler_config.admin_chat_id !== null}
+      <GroupChatBadge {botId} chatId={config.feedback_handler_config.admin_chat_id} />
+    {:else}
+      {$t("studio.human_operator.in_private_messages")}
+    {/if}
   </NodeContent>
 </Node>

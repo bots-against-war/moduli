@@ -198,6 +198,7 @@ async def test_user_flow_with_form(
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
         redis=redis,
+        owner_chat_id=0,
         _bot_factory=MockedAsyncTeleBot,
     )
     assert not bot_runner.background_jobs
@@ -362,6 +363,7 @@ async def test_form_results_internal_storage() -> None:
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
         redis=redis,
+        owner_chat_id=0,
         _bot_factory=MockedAsyncTeleBot,
     )
     assert not bot_runner.background_jobs

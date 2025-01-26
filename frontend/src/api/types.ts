@@ -30,7 +30,7 @@ export type Contents = Content[];
 export type NextBlockId3 = string | null;
 export type BlockId1 = string;
 export type CatchAll = boolean;
-export type AdminChatId = number;
+export type AdminChatId = number | null;
 export type ForumTopicPerUser = boolean;
 export type AnonimyzeUsers = boolean;
 export type MaxMessagesPerMinute = number;
@@ -51,6 +51,7 @@ export type HashtagsInAdminChat = boolean;
 export type UnansweredHashtag = string | null;
 export type HashtagMessageRarerThan = string | null;
 export type MessageLogToAdminChat = boolean;
+export type ConfirmForwardedToAdminRarerThan = string | null;
 export type BlockId2 = string;
 export type Text1 =
   | string
@@ -154,7 +155,7 @@ export type UnsupportedCommand =
     };
 export type FormResultUserAttribution = "none" | "unique_id" | "name" | "full";
 export type EchoToUser = boolean;
-export type ChatId = string | number;
+export type ChatId = string | number | null;
 export type ViaFeedbackHandler = boolean;
 export type ToStore = boolean;
 export type IsAnonymous = boolean | null;
@@ -384,6 +385,7 @@ export interface FeedbackHandlerConfig {
   unanswered_hashtag: UnansweredHashtag;
   hashtag_message_rarer_than: HashtagMessageRarerThan;
   message_log_to_admin_chat: MessageLogToAdminChat;
+  confirm_forwarded_to_admin_rarer_than?: ConfirmForwardedToAdminRarerThan;
   [k: string]: unknown;
 }
 export interface MessagesToUser {

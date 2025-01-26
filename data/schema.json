@@ -741,8 +741,15 @@
     "FeedbackHandlerConfig": {
       "properties": {
         "admin_chat_id": {
-          "title": "Admin Chat Id",
-          "type": "integer"
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Admin Chat Id"
         },
         "forum_topic_per_user": {
           "title": "Forum Topic Per User",
@@ -792,6 +799,19 @@
         "message_log_to_admin_chat": {
           "title": "Message Log To Admin Chat",
           "type": "boolean"
+        },
+        "confirm_forwarded_to_admin_rarer_than": {
+          "anyOf": [
+            {
+              "format": "duration",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confirm Forwarded To Admin Rarer Than"
         }
       },
       "required": [
@@ -1229,6 +1249,9 @@
             },
             {
               "type": "integer"
+            },
+            {
+              "type": "null"
             }
           ],
           "title": "Chat Id"

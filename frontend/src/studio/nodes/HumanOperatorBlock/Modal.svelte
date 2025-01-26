@@ -54,6 +54,7 @@
         label={$t("studio.human_operator.admin_chat")}
         {botId}
         bind:selectedGroupChatId={fhConfig.admin_chat_id}
+        allowNoChat
       >
         <p slot="description">
           {@html $t("studio.human_operator.admin_chat_descr_1")}

@@ -5,7 +5,6 @@
   import { t } from "svelte-i18n";
   import { getAvailableGroupChats, startGroupChatDiscovery, stopGroupChatDiscovery } from "../api/groupChats";
   import type { TgGroupChat } from "../api/types";
-  import { PLACEHOLDER_GROUP_CHAT_ID } from "../studio/nodes/defaultConfigs";
   import ErrorBadge from "./AlertBadge.svelte";
   import BotUserBadge from "./BotUserBadge.svelte";
   import GroupChatBadge from "./GroupChatBadge.svelte";
@@ -15,11 +14,11 @@
   export let botId: string;
   export let selectedGroupChatId: number | string | null;
   export let forbidLegacyGroups: boolean = true;
-  export let allowEmptyState: boolean = false;
+  export let allowNoChat: boolean = false;
   export let description: string | null = null;
 
   // auto-open if not selected initially
-  let isOpen = !allowEmptyState && (selectedGroupChatId === PLACEHOLDER_GROUP_CHAT_ID || selectedGroupChatId === null);
+  let isOpen = !allowNoChat && selectedGroupChatId === null;
 
   let chatsLoadError: string | null = null;
   let availableChats: TgGroupChat[] = [];
@@ -80,7 +79,7 @@
   const chatLabel = (chat: TgGroupChat) => `group-chat-${chat.id}`;
 </script>
 
-<InputWrapper {label} {description} required={!allowEmptyState}>
+<InputWrapper {label} {description} required={!allowNoChat}>
   <Accordion flush>
     <AccordionItem
       bind:open={isOpen}
@@ -89,7 +88,7 @@
       class="flex items-center justify-between w-full font-medium text-left border-none"
     >
       <div slot="header" class="text-gray-900 text-sm">
-        {#if selectedGroupChatId !== PLACEHOLDER_GROUP_CHAT_ID && selectedGroupChatId !== null}
+        {#if selectedGroupChatId !== null}
           <GroupChatBadge {botId} chatId={selectedGroupChatId} />
         {:else}
           <span class="text-gray-600">{$t("components.group_chat_select.not_selected")}</span>
@@ -172,7 +171,7 @@
                   </div>
                 {/each}
               </div>
-              {#if allowEmptyState}
+              {#if allowNoChat && (availableChats.length > 0 || selectedGroupChatId !== null)}
                 <div class="flex flex-row items-center gap-2">
                   <input
                     type="radio"

@@ -189,20 +189,16 @@ class TelebotConstructorStore:
 
         admin_chat_ids: list[str | int] = []
         if detailed and (config := await self.load_bot_config(owner_id, bot_id, version=running_version or -1)):
-            admin_chat_ids.extend(
-                b.human_operator.feedback_handler_config.admin_chat_id
-                for b in config.user_flow_config.blocks
-                if b.human_operator is not None
-            )
-            admin_chat_ids.extend(
-                b.form.results_export.to_chat.chat_id
-                for b in config.user_flow_config.blocks
+            for b in config.user_flow_config.blocks:
+                if b.human_operator is not None and b.human_operator.feedback_handler_config.admin_chat_id is not None:
+                    admin_chat_ids.append(b.human_operator.feedback_handler_config.admin_chat_id)
                 if (
                     b.form is not None
                     and b.form.results_export.to_chat is not None
                     and not b.form.results_export.to_chat.via_feedback_handler
-                )
-            )
+                    and b.form.results_export.to_chat.chat_id is not None
+                ):
+                    admin_chat_ids.append(b.form.results_export.to_chat.chat_id)
 
         return BotInfo(
             bot_id=bot_id,

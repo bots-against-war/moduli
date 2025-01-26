@@ -211,7 +211,7 @@ class FormMessages(BaseModel):
 
 
 class FormResultsExportToChatConfig(BaseModel):
-    chat_id: AnyChatId
+    chat_id: AnyChatId | None
     via_feedback_handler: bool
 
 
@@ -447,7 +447,7 @@ class FormBlock(UserFlowBlock):
                         if user_id_text := self.results_export.user_attribution.user_html(user, self.block_id):
                             text = user_id_text + "\n\n" + text
                         await context.bot.send_message(
-                            chat_id=self.results_export.to_chat.chat_id,
+                            chat_id=self.results_export.to_chat.chat_id or context.owner_chat_id,
                             text=text,
                             parse_mode="HTML",
                         )

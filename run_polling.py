@@ -66,12 +66,13 @@ async def main() -> None:
     auth: Auth
     auth_type = os.environ.get("AUTH", "NOOP").upper()
     if auth_type == "TELEGRAM":
-        logging.info("Using Telegram-based auth")
         auth = TelegramAuth(
             redis=redis,
             bot=AsyncTeleBot(token=os.environ["TELEGRAM_AUTH_BOT_TOKEN"]),
             telegram_files_downloader=telegram_files_downloader,
+            trusted_client_tokens=os.environ.get("TRUSTED_CLIENT_TOKENS", "").split(","),
         )
+        logging.info(f"Using Telegram-based auth with {len(auth.trusted_client_tokens)} trusted client tokens")
     elif auth_type == "GROUP_CHAT":
         logging.info("Using Telegram group auth")
         auth = GroupChatAuth(
@@ -82,7 +83,7 @@ async def main() -> None:
         )
     elif auth_type == "NOOP":
         logging.info("Using noop auth")
-        auth = NoAuth()
+        auth = NoAuth(owner_chat_id=int(os.environ["OWNER_CHAT_ID"]))
     else:
         raise ValueError(f"Unexpected auth type: {auth_type!r}")
 

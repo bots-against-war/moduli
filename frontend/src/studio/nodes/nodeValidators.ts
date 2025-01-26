@@ -15,7 +15,6 @@ import type { LanguageConfig } from "../stores";
 import { capitalize } from "../utils";
 import { formMessageName } from "./FormBlock/content";
 import { getBaseFormFieldConfig } from "./FormBlock/utils";
-import { PLACEHOLDER_GROUP_CHAT_ID } from "./defaultConfigs";
 
 export interface ValidationError {
   error: string | string[];
@@ -94,9 +93,6 @@ export function validateHumanOperatorBlock(
 ): Result<null, ValidationError> {
   const results: Result<null, ValidationError>[] = [];
 
-  if (config.feedback_handler_config.admin_chat_id === PLACEHOLDER_GROUP_CHAT_ID) {
-    results.push(err({ error: t("studio.validation.admin_chat_not_selected") }));
-  }
   results.push(
     validateLocalizableText(
       config.feedback_handler_config.messages_to_user.forwarded_to_admin_ok,
@@ -267,9 +263,6 @@ export function validateFormBlock(
   );
   if (!(config.results_export.echo_to_user || config.results_export.to_chat || config.results_export.to_store)) {
     results.push(err({ error: t("studio.validation.form_no_response_processing") }));
-  }
-  if (config.results_export.to_chat !== null && config.results_export.to_chat.chat_id === PLACEHOLDER_GROUP_CHAT_ID) {
-    results.push(err({ error: t("studio.validation.form_no_export_chat") }));
   }
   return mergeResults(results);
 }

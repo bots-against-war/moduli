@@ -386,7 +386,8 @@
       "ua_opt_no": "Telegram account data",
       "user_anonymization_descr": "User messages will be identified this way",
       "user_anonymization_yes_hint": "Messages from user will be tagged with an anonymized emoji identifier (⏯😫🎲📅). It is used to distinguish between users without revealing their identity.",
-      "user_anonymization_no_hint": "Telegram account data will be added to messages: name, @username, user id"
+      "user_anonymization_no_hint": "Telegram account data will be added to messages: name, @username, user id",
+      "in_private_messages": "In private messages"
     },
     "language_select": {
       "default_lang_descr": "Used if the user has not selected a language",
