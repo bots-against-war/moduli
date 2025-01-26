@@ -103,7 +103,7 @@ async def construct_bot(
             owner_chat_id=owner_chat_id,
         )
 
-        logger.info(f"Got result: {user_flow_setup_result}")
+        logger.debug(f"Got result: {user_flow_setup_result}")
         background_jobs.extend(user_flow_setup_result.background_jobs)
         aux_endpoints.extend(user_flow_setup_result.aux_endpoints)
         bot_commands.extend(user_flow_setup_result.bot_commands)
