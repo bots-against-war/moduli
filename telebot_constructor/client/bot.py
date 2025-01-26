@@ -113,7 +113,7 @@ moduli_client_form = Form.branching(
                 • Дайте боту имя и @юзернейм
                 • Получите токен вашего бота (выглядит так: <code>4839574812:AAFD39kkdpWt3ywyRZergyOLMaJhac60qc</code>), скопируйте и пришлите в этот чат.
 
-                Не подключайте боты, которые используются в других сервисах (Dialogflowl, Livegram и других).
+                Не подключайте боты, которые используются в других сервисах (Livegram, Dialogflow, и других).
                 """  # noqa: E501
             ),
         ),
@@ -164,7 +164,7 @@ def moduli_bot_form_handler(
             retry_field_msg="Исправьте значение!",
             unsupported_cmd_error_template="",
             can_skip_field_template="",
-            cancelling_because_of_error_template="",
+            cancelling_because_of_error_template="Unexpected error, exiting form: {}",
             cant_skip_field_msg="",
         ),
     )
@@ -230,8 +230,8 @@ def moduli_bot_form_handler(
                                 max_messages_per_minute=15,
                                 messages_to_user=MessagesToUser(
                                     forwarded_to_admin_ok=(
-                                        "Переслано с сохранением вашей анонимности! Для полной безопасности "
-                                        + "вы можете удалить переписку со своей стороны."
+                                        "Сообщение передано с сохранением вашей анонимности. "
+                                        + "Рекомендуем регулярно удалять чувствительную переписку – бот не может сделать это за вас."
                                         if anonymize_users
                                         else "Переслано!"
                                     ),
