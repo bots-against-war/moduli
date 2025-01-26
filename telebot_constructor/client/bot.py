@@ -110,7 +110,7 @@ moduli_client_form = Form.branching(
                 (1/3) Создайте бота
 
                 • Перейдите в @BotFather
-                • Введите команду /newbot
+                • Введите команду <code>/newbot</code>
                 • Дайте боту имя и @юзернейм
                 • Получите токен вашего бота (выглядит так: <code>4839574812:AAFD39kkdpWt3ywyRZergyOLMaJhac60qc</code>), скопируйте и пришлите в этот чат.
 
