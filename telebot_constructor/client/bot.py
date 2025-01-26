@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import enum
 import logging
@@ -310,8 +311,6 @@ def moduli_bot_form_handler(
 
 
 if __name__ == "__main__":
-    import asyncio
-
     from telebot_components.redis_utils.emulation import PersistentRedisEmulation
 
     async def main() -> None:
