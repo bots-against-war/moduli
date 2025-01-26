@@ -1,5 +1,4 @@
 import datetime
-from telebot_components.utils import html_link
 import enum
 import logging
 import os
@@ -28,6 +27,7 @@ from telebot_components.form.handler import (
 )
 from telebot_components.language import MaybeLanguage
 from telebot_components.redis_utils.interface import RedisInterface
+from telebot_components.utils import html_link
 
 from telebot_constructor.app_models import SaveBotConfigVersionPayload
 from telebot_constructor.bot_config import (
