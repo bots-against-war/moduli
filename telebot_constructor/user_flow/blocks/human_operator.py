@@ -10,6 +10,7 @@ from telebot_components.feedback import (
     UserAnonymization,
 )
 from telebot_components.feedback.anti_spam import AntiSpam, AntiSpamConfig
+from telebot_components.utils import emoji_hash
 
 from telebot_constructor.user_flow.blocks.base import UserFlowBlock
 from telebot_constructor.user_flow.types import (
@@ -107,6 +108,7 @@ class HumanOperatorBlock(UserFlowBlock):
                 forum_topic_per_user=self.feedback_handler_config.forum_topic_per_user,
                 user_forum_topic_lifetime=datetime.timedelta(days=90),
                 custom_user_message_filter=custom_user_message_filter,
+                user_id_hash_func=bracketed_emoji_hash,
             ),
             anti_spam=AntiSpam(
                 redis=context.redis,
@@ -157,3 +159,7 @@ class HumanOperatorBlock(UserFlowBlock):
                 ),
             ],
         )
+
+
+def bracketed_emoji_hash(user_id: int, bot_prefix: str) -> str:
+    return "(" + emoji_hash(user_id, bot_prefix, length=6) + ")"
