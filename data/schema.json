@@ -799,6 +799,19 @@
         "message_log_to_admin_chat": {
           "title": "Message Log To Admin Chat",
           "type": "boolean"
+        },
+        "confirm_forwarded_to_admin_rarer_than": {
+          "anyOf": [
+            {
+              "format": "duration",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confirm Forwarded To Admin Rarer Than"
         }
       },
       "required": [

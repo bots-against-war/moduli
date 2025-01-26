@@ -51,6 +51,7 @@ export type HashtagsInAdminChat = boolean;
 export type UnansweredHashtag = string | null;
 export type HashtagMessageRarerThan = string | null;
 export type MessageLogToAdminChat = boolean;
+export type ConfirmForwardedToAdminRarerThan = string | null;
 export type BlockId2 = string;
 export type Text1 =
   | string
@@ -384,6 +385,7 @@ export interface FeedbackHandlerConfig {
   unanswered_hashtag: UnansweredHashtag;
   hashtag_message_rarer_than: HashtagMessageRarerThan;
   message_log_to_admin_chat: MessageLogToAdminChat;
+  confirm_forwarded_to_admin_rarer_than?: ConfirmForwardedToAdminRarerThan;
   [k: string]: unknown;
 }
 export interface MessagesToUser {
