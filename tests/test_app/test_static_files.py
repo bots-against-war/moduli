@@ -46,9 +46,7 @@ async def test_serve_static_files(
     assert await resp.text("utf-8") == "console.log(foo);"
 
 
-async def test_cors(
-    constructor_app: Tuple[ModuliApp, aiohttp.web.Application], aiohttp_client: AiohttpClient
-) -> None:
+async def test_cors(constructor_app: Tuple[ModuliApp, aiohttp.web.Application], aiohttp_client: AiohttpClient) -> None:
     _, web_app = constructor_app
     client = await aiohttp_client(web_app)
 

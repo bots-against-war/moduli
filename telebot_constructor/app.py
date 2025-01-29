@@ -428,6 +428,17 @@ class ModuliApp:
                 await self.store.save_used_token_hash(token_hash)
             return web.Response(text=result.message, status=200)
 
+        async def _delete_secret(owner_id: str, secret_name: str, is_token: bool) -> None:
+            if is_token:
+                secret_value = await self.secret_store.get_secret(secret_name, owner_id)
+                if secret_value is None:
+                    raise web.HTTPBadRequest(reason="Secret not found")
+                token_hash = hash_token(secret_value)
+                await self.store.remove_used_token_hash(token_hash)
+
+            if not (await self.secret_store.remove_secret(secret_name, owner_id)):
+                raise web.HTTPBadRequest(reason="Secret not found")
+
         @routes.delete("/api/secrets/{secret_name}")
         async def delete_secret(request: web.Request) -> web.Response:
             """
@@ -437,20 +448,12 @@ class ModuliApp:
                 "201":
                     description: Success
             """
-            owner_id = await self.authenticate(request)
-            secret_name = self.parse_secret_name(request)
-            is_token = request.query.get("is_token", "false") == "true"
-            if is_token:
-                secret_value = await self.secret_store.get_secret(secret_name, owner_id)
-                if secret_value is None:
-                    raise web.HTTPBadRequest(reason="Secret not found")
-                token_hash = hash_token(secret_value)
-                await self.store.remove_used_token_hash(token_hash)
-
-            if await self.secret_store.remove_secret(secret_name, owner_id):
-                return web.Response(text="Secret removed")
-            else:
-                raise web.HTTPBadRequest(reason="Secret not found")
+            await _delete_secret(
+                owner_id=await self.authenticate(request),
+                secret_name=self.parse_secret_name(request),
+                is_token=request.query.get("is_token", "false") == "true",
+            )
+            return web.Response(text="Secret removed")
 
         @routes.get("/api/secrets")
         async def list_secret_names(request: web.Request) -> web.Response:
@@ -562,7 +565,8 @@ class ModuliApp:
             config = await self.load_bot_config(a.owner_id, a.bot_id, version=-1)
             await self.stop_bot(a)
             await self.store.remove_bot_config(a.owner_id, a.bot_id)
-            await self.secret_store.remove_secret(config.token_secret_name, owner_id=a.owner_id)
+            # TODO: remove token hash (reuse secret deletion logic)
+            await _delete_secret(owner_id=a.owner_id, secret_name=config.token_secret_name, is_token=True)
             await self.store.save_event(
                 a.owner_id,
                 a.bot_id,
