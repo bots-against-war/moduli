@@ -71,10 +71,6 @@ class Store:
             dumper=str,
             loader=str,
         )
-
-        self.form_results = FormResultsStore(redis=redis)
-        self.errors = BotErrorsStore(redis=redis)
-
         self._hashed_tokens_store = SetStore(
             name="hashed-tokens",
             prefix=CONSTRUCTOR_PREFIX,
@@ -83,6 +79,9 @@ class Store:
             dumper=str,
             loader=str,
         )
+
+        self.form_results = FormResultsStore(redis=redis)
+        self.errors = BotErrorsStore(redis=redis)
 
     # bot config store CRUD
 

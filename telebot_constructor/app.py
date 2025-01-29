@@ -565,7 +565,6 @@ class ModuliApp:
             config = await self.load_bot_config(a.owner_id, a.bot_id, version=-1)
             await self.stop_bot(a)
             await self.store.remove_bot_config(a.owner_id, a.bot_id)
-            # TODO: remove token hash (reuse secret deletion logic)
             await _delete_secret(owner_id=a.owner_id, secret_name=config.token_secret_name, is_token=True)
             await self.store.save_event(
                 a.owner_id,
