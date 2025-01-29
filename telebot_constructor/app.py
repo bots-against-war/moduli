@@ -378,6 +378,29 @@ class ModuliApp:
             ),
         )
 
+    async def delete_secret(self, owner_id: str, secret_name: str, is_token: bool) -> bool:
+        if is_token:
+            secret_value = await self.secret_store.get_secret(secret_name, owner_id)
+            if secret_value is None:
+                return False
+            token_hash = hash_token(secret_value)
+            await self.store.remove_used_token_hash(token_hash)
+
+        return await self.secret_store.remove_secret(secret_name, owner_id)
+
+    async def validate_bot_token(self, token: str, must_be_unused: bool) -> bool:
+        bot = self._bot_factory(token)
+        bot_user = await load_bot_user(bot)
+        if bot_user is None:
+            return False
+        if must_be_unused:
+            if await has_webhook(bot):
+                return False
+            token_hash = hash_token(token)
+            if await self.store.is_token_hash_saved(token_hash):
+                return False
+        return True
+
     # region: API endpoints
 
     async def create_constructor_web_app(self) -> web.Application:
@@ -405,16 +428,9 @@ class ModuliApp:
                 raise web.HTTPBadRequest(reason="Secret can't be empty")
 
             is_token = request.query.get("is_token", "false") == "true"
-            token_hash: str | None = None
             if is_token:
-                bot = self._bot_factory(secret_value)
-                if (await load_bot_user(bot)) is None:
-                    raise web.HTTPBadRequest(reason="Not a valid token")
-                if await has_webhook(bot):
-                    raise web.HTTPBadRequest(reason="Token is used elsewhere")
-                token_hash = hash_token(secret_value)
-                if await self.store.is_token_hash_saved(token_hash):
-                    raise web.HTTPBadRequest(reason="Token is used elsewhere")
+                if not await self.validate_bot_token(secret_value, must_be_unused=True):
+                    raise web.HTTPBadRequest(reason="Token is invalid or already used")
 
             result = await self.secret_store.save_secret(
                 secret_name=secret_name,
@@ -424,20 +440,9 @@ class ModuliApp:
             )
             if not result.is_saved:
                 raise web.HTTPInternalServerError(reason="Failed to save the token to secret store")
-            if token_hash is not None:
-                await self.store.save_used_token_hash(token_hash)
-            return web.Response(text=result.message, status=200)
-
-        async def _delete_secret(owner_id: str, secret_name: str, is_token: bool) -> None:
             if is_token:
-                secret_value = await self.secret_store.get_secret(secret_name, owner_id)
-                if secret_value is None:
-                    raise web.HTTPBadRequest(reason="Secret not found")
-                token_hash = hash_token(secret_value)
-                await self.store.remove_used_token_hash(token_hash)
-
-            if not (await self.secret_store.remove_secret(secret_name, owner_id)):
-                raise web.HTTPBadRequest(reason="Secret not found")
+                await self.store.save_used_token_hash(hash_token(secret_value))
+            return web.Response(text=result.message, status=200)
 
         @routes.delete("/api/secrets/{secret_name}")
         async def delete_secret(request: web.Request) -> web.Response:
@@ -448,12 +453,14 @@ class ModuliApp:
                 "201":
                     description: Success
             """
-            await _delete_secret(
+            if await self.delete_secret(
                 owner_id=await self.authenticate(request),
                 secret_name=self.parse_secret_name(request),
                 is_token=request.query.get("is_token", "false") == "true",
-            )
-            return web.Response(text="Secret removed")
+            ):
+                return web.Response(text="Secret removed")
+            else:
+                raise web.HTTPNotFound(reason="Secret not found")
 
         @routes.get("/api/secrets")
         async def list_secret_names(request: web.Request) -> web.Response:
@@ -565,7 +572,7 @@ class ModuliApp:
             config = await self.load_bot_config(a.owner_id, a.bot_id, version=-1)
             await self.stop_bot(a)
             await self.store.remove_bot_config(a.owner_id, a.bot_id)
-            await _delete_secret(owner_id=a.owner_id, secret_name=config.token_secret_name, is_token=True)
+            await self.delete_secret(owner_id=a.owner_id, secret_name=config.token_secret_name, is_token=True)
             await self.store.save_event(
                 a.owner_id,
                 a.bot_id,
@@ -992,10 +999,13 @@ class ModuliApp:
             """
             _ = await self.authenticate(request)
             token_payload = await self.parse_body_as_model(request, BotTokenPayload)
-            if (await load_bot_user(self._bot_factory(token_payload.token))) is None:
-                raise web.HTTPBadRequest(reason="Bot token validation failed")
-            else:
+            if await self.validate_bot_token(
+                token=token_payload.token,
+                must_be_unused=request.query.get("must_be_unused", "false") == "true",
+            ):
                 return web.Response(text="Token is valid")
+            else:
+                raise web.HTTPBadRequest(reason="Bot token validation failed")
 
         # endregion
         ##################################################################################

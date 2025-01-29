@@ -39,9 +39,17 @@ class TrustedModuliApiClient:
             logger.info(f"Got response: {text} ({resp.status})")
         logger.info(f"moduli API pinged in {time.time() - start:.3f} sec")
 
-    async def create_secret(self, user: tg.User, name: str, value: str) -> bool:
+    async def validate_token(self, user: tg.User, token: str) -> bool:
         async with self.aiohttp_session.post(
-            self.api_url(f"/secrets/{name}"),
+            self.api_url("/validate-token?must_be_unused=true"),
+            headers=self.auth_headers(user),
+            data=token,
+        ) as resp:
+            return resp.ok
+
+    async def create_token_secret(self, user: tg.User, name: str, value: str) -> bool:
+        async with self.aiohttp_session.post(
+            self.api_url(f"/secrets/{name}?is_token=true"),
             headers=self.auth_headers(user),
             data=value,
         ) as resp:
