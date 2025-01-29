@@ -1,6 +1,7 @@
 import collections
 import datetime
 import functools
+import hashlib
 import io
 import logging
 import re
@@ -228,3 +229,21 @@ async def send_telegram_alert(
 
 def log_prefix(owner_id: str, bot_id: str) -> str:
     return f"[{owner_id}/{bot_id}]"
+
+
+async def load_bot_user(bot: AsyncTeleBot) -> tg.User | None:
+    try:
+        return await bot.get_me()
+    except Exception:
+        return None
+
+
+async def has_webhook(bot: AsyncTeleBot) -> bool:
+    try:
+        return bool((await bot.get_webhook_info()).url)
+    except Exception:
+        return False
+
+
+def hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()

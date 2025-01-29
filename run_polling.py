@@ -12,7 +12,7 @@ from telebot_components.redis_utils.interface import RedisInterface
 from telebot_components.utils.alerts import configure_alerts
 from telebot_components.utils.secrets import RedisSecretStore
 
-from telebot_constructor.app import TelebotConstructorApp
+from telebot_constructor.app import ModuliApp
 from telebot_constructor.auth.auth import Auth, GroupChatAuth, NoAuth
 from telebot_constructor.auth.telegram_auth import TelegramAuth
 from telebot_constructor.store.media import (
@@ -98,7 +98,7 @@ async def main() -> None:
         media_store = FilesystemMediaStore(media_dir)
         logging.info("Filesystem media store set up")
 
-    app = TelebotConstructorApp(
+    app = ModuliApp(
         redis=redis,
         auth=auth,
         secret_store=secret_store,

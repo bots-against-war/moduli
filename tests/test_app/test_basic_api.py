@@ -1,12 +1,12 @@
 import aiohttp.web
 from pytest_aiohttp.plugin import AiohttpClient  # type: ignore
 
-from telebot_constructor.app import TelebotConstructorApp
+from telebot_constructor.app import ModuliApp
 from tests.utils import RECENT_TIMESTAMP, mask_recent_timestamps
 
 
 async def test_get_logged_in_user(
-    constructor_app: tuple[TelebotConstructorApp, aiohttp.web.Application],
+    constructor_app: tuple[ModuliApp, aiohttp.web.Application],
     aiohttp_client: AiohttpClient,
 ) -> None:
     _, web_app = constructor_app
@@ -24,7 +24,7 @@ async def test_get_logged_in_user(
 
 
 async def test_bot_config(
-    constructor_app: tuple[TelebotConstructorApp, aiohttp.web.Application],
+    constructor_app: tuple[ModuliApp, aiohttp.web.Application],
     aiohttp_client: AiohttpClient,
 ) -> None:
     _, web_app = constructor_app
@@ -274,7 +274,7 @@ async def test_bot_config(
 
 
 async def test_admin_chat_ids(
-    constructor_app: tuple[TelebotConstructorApp, aiohttp.web.Application],
+    constructor_app: tuple[ModuliApp, aiohttp.web.Application],
     aiohttp_client: AiohttpClient,
 ) -> None:
     _, web_app = constructor_app

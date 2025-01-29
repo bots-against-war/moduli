@@ -52,14 +52,7 @@ from telebot_constructor.user_flow.blocks.human_operator import (
     MessagesToUser,
 )
 from telebot_constructor.user_flow.entrypoints.command import CommandEntryPoint
-
-
-async def load_bot_user(token: str) -> tg.User | None:
-    bot = AsyncTeleBot(token=token)
-    try:
-        return await bot.get_me()
-    except Exception:
-        return None
+from telebot_constructor.utils import load_bot_user
 
 
 def preproc_text(t: str) -> str:
@@ -75,7 +68,7 @@ class BotTokenField(FormField[str]):
         dynamic_data: Any,
     ) -> MessageProcessingResult[str]:
         token = message.text_content
-        if await load_bot_user(token):
+        if await load_bot_user(AsyncTeleBot(token)):
             return MessageProcessingResult(
                 response_to_user=None,
                 parsed_value=token,
@@ -175,7 +168,7 @@ def moduli_bot_form_handler(
 
         token = context.result["token"]
         anonymize_users = context.result["anonymize"] is AnonymizeUsers.YES
-        bot_user = await load_bot_user(token)
+        bot_user = await load_bot_user(AsyncTeleBot(token))
         if bot_user is None:
             await bot.send_message(
                 chat_id=user.id,

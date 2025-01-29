@@ -14,7 +14,7 @@ from telebot_components.redis_utils.emulation import PersistentRedisEmulation
 from telebot_components.redis_utils.interface import RedisInterface
 from telebot_components.utils.secrets import RedisSecretStore
 
-from telebot_constructor.app import TelebotConstructorApp
+from telebot_constructor.app import ModuliApp
 from telebot_constructor.auth.auth import Auth, GroupChatAuth, NoAuth
 from telebot_constructor.auth.telegram_auth import TelegramAuth
 from telebot_constructor.telegram_files_downloader import (
@@ -78,7 +78,7 @@ async def main() -> None:
     else:
         raise ValueError(f"Unexpected auth type: {auth_type!r}")
 
-    tbc_app = TelebotConstructorApp(
+    tbc_app = ModuliApp(
         redis=redis,
         auth=auth,
         secret_store=secret_store,

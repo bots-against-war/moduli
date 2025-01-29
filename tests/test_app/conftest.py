@@ -12,7 +12,7 @@ from telebot.test_util import MockedAsyncTeleBot
 from telebot_components.redis_utils.emulation import RedisEmulation
 from telebot_components.utils.secrets import RedisSecretStore
 
-from telebot_constructor.app import TelebotConstructorApp
+from telebot_constructor.app import ModuliApp
 from telebot_constructor.auth.auth import NoAuth
 from telebot_constructor.runners import ConstructedBotRunner
 from telebot_constructor.store.media import RedisMediaStore
@@ -51,10 +51,10 @@ def mocked_async_telebot_factory(token: str, **kwargs) -> AsyncTeleBot:
 
 
 @pytest.fixture
-async def constructor_app() -> AsyncGenerator[tuple[TelebotConstructorApp, aiohttp.web.Application], None]:
+async def constructor_app() -> AsyncGenerator[tuple[ModuliApp, aiohttp.web.Application], None]:
     redis = RedisEmulation()
     with tempfile.TemporaryDirectory() as tempdir:
-        telebot_constructor_app = TelebotConstructorApp(
+        telebot_constructor_app = ModuliApp(
             redis=redis,
             auth=NoAuth(owner_chat_id=0),
             secret_store=RedisSecretStore(
