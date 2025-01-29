@@ -383,8 +383,7 @@ class ModuliApp:
             secret_value = await self.secret_store.get_secret(secret_name, owner_id)
             if secret_value is None:
                 return False
-            token_hash = hash_token(secret_value)
-            await self.store.remove_used_token_hash(token_hash)
+            await self.store.remove_used_token_hash(hash_token(secret_value))
 
         return await self.secret_store.remove_secret(secret_name, owner_id)
 
@@ -396,8 +395,7 @@ class ModuliApp:
         if must_be_unused:
             if await has_webhook(bot):
                 return False
-            token_hash = hash_token(token)
-            if await self.store.is_token_hash_saved(token_hash):
+            if await self.store.is_token_hash_saved(hash_token(token)):
                 return False
         return True
 
