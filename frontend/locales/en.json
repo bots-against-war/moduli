@@ -24,7 +24,8 @@
       "incorrect_token_error": "Check token validity",
       "start_cmd_description": "start bot",
       "token": "Token",
-      "token_cannot_be_empty_error": "Token can't be empty"
+      "token_cannot_be_empty_error": "Token can't be empty",
+      "already_used_token_error": "Token already in use!"
     }
   },
   "timestamp": {

@@ -263,6 +263,10 @@ export type Versions = BotVersionInfo[];
 export type TotalVersions = number;
 export type AlertChatId1 = number | string;
 export type Test = boolean;
+export type Name7 = string;
+export type Username7 = string;
+export type SuggestedBotId = string;
+export type IsUsed = boolean;
 
 /**
  * Temporary class to pack several models into one schema; not used directly by frontend code
@@ -284,6 +288,7 @@ export interface BackendDataModels {
   bot_errors_page: BotErrorsPage;
   bot_versions_page: BotVersionsPage;
   alert_chat_id_payload: SetAlertChatIdPayload;
+  bot_token_validation_result: BotTokenValidationResult;
   [k: string]: unknown;
 }
 export interface BotConfig {
@@ -716,5 +721,12 @@ export interface BotVersionsPage {
 export interface SetAlertChatIdPayload {
   alert_chat_id: AlertChatId1;
   test?: Test;
+  [k: string]: unknown;
+}
+export interface BotTokenValidationResult {
+  name: Name7;
+  username: Username7;
+  suggested_bot_id: SuggestedBotId;
+  is_used: IsUsed;
   [k: string]: unknown;
 }

@@ -4,12 +4,10 @@ import enum
 import logging
 import os
 import textwrap
-import uuid
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, TypedDict
 
 import aiohttp
-from slugify import slugify
 from telebot import AsyncTeleBot
 from telebot import types as tg
 from telebot.runner import BotRunner
@@ -51,7 +49,6 @@ from telebot_constructor.user_flow.blocks.human_operator import (
     MessagesToUser,
 )
 from telebot_constructor.user_flow.entrypoints.command import CommandEntryPoint
-from telebot_constructor.utils import load_bot_user
 
 
 def preproc_text(t: str) -> str:
@@ -69,16 +66,24 @@ class BotTokenField(FormField[str]):
         dynamic_data: Any,
     ) -> MessageProcessingResult[str]:
         token = message.text_content.strip()
-        if await self.api.validate_token(user=message.from_user, token=token):
-            return MessageProcessingResult(
-                response_to_user=None,
-                parsed_value=token,
-            )
-        else:
+        res = await self.api.validate_token(user=message.from_user, token=token)
+        if res is None:
             return MessageProcessingResult(
                 response_to_user="Проверьте валидность токена!",
                 parsed_value=None,
             )
+        if res.is_used:
+            return MessageProcessingResult(
+                response_to_user=(
+                    "Токен уже использован для создания бота! Создайте нового бота или "
+                    + "новый токен для существующего в @BotFather."
+                ),
+                parsed_value=None,
+            )
+        return MessageProcessingResult(
+            response_to_user=None,
+            parsed_value=token,
+        )
 
 
 class AnonymizeUsers(enum.Enum):
@@ -158,16 +163,18 @@ def moduli_bot_form_handler(
 
         token = context.result["token"]
         anonymize_users = context.result["anonymize"] is AnonymizeUsers.YES
-        bot_user = await load_bot_user(AsyncTeleBot(token))
-        if bot_user is None:
+
+        res = await api.validate_token(user=user, token=token)
+        if res is None or res.is_used:
             await bot.send_message(
                 chat_id=user.id,
                 text="Что-то не так с вашим токеном, проверьте его валидность и заполните форму ещё раз!",
             )
             return
-        bot_name = bot_user.full_name
+        bot_name = res.name
+        moduli_bot_id = res.suggested_bot_id
+        bot_username = res.username
 
-        moduli_bot_id = slugify(bot_name, max_length=64, word_boundary=True) + "-" + str(uuid.uuid4())[:8]
         token_secret_name = f"token-for-{moduli_bot_id}"
         if not await api.create_token_secret(user, name=token_secret_name, value=token):
             await bot.send_message(user.id, text="Не получилось создать бота...")
@@ -261,14 +268,14 @@ def moduli_bot_form_handler(
             return
         await bot.send_message(
             user.id,
-            f"Браво! Ваш бот @{bot_user.username} запущен – "
+            f"Браво! Ваш бот @{bot_username} запущен – "
             + 'для проверки нажмите "start" и напишите ему любое сообщение.',
         )
         await asyncio.sleep(0.15)
         studio_link = api.base_url.strip("/") + f"/studio/{moduli_bot_id}"
         await bot.send_message(
             user.id,
-            f"Сообщения от пользователь:ниц будут приходить в чат с @{bot_user.username}. Ответы "
+            f"Сообщения от пользователь:ниц будут приходить в чат с @{bot_username}. Ответы "
             + "(по свайпу влево или двойному нажатию) будут отправлены от лица бота.\n\n"
             + f"В {html_link(text='веб-версии конструктора', href=studio_link)} можно подключить админ-чат, "
             + "где сообщения смогут обрабатывать несколько человек. Там же доступно редактирование бота "

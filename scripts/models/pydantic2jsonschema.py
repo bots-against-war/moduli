@@ -13,6 +13,7 @@ from pydantic.json_schema import GenerateJsonSchema, JsonSchemaValue
 from telebot_constructor.app_models import (
     BotErrorsPage,
     BotInfo,
+    BotTokenValidationResult,
     BotVersionsPage,
     FormInfo,
     FormInfoBasic,
@@ -63,6 +64,7 @@ if __name__ == "__main__":
         bot_errors_page: BotErrorsPage
         bot_versions_page: BotVersionsPage
         alert_chat_id_payload: SetAlertChatIdPayload
+        bot_token_validation_result: BotTokenValidationResult
 
     current_schema = BackendDataModels.model_json_schema(
         mode="serialization",

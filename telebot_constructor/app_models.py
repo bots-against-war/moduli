@@ -1,7 +1,6 @@
 """Pydantic models for various app endpoints"""
 
 import enum
-from typing import Optional
 
 from pydantic import BaseModel, Field, TypeAdapter
 from telebot import AsyncTeleBot
@@ -19,6 +18,13 @@ class BotTokenPayload(BaseModel):
     token: str
 
 
+class BotTokenValidationResult(BaseModel):
+    name: str
+    username: str
+    suggested_bot_id: str
+    is_used: bool
+
+
 class TgGroupChatType(enum.Enum):
     GROUP = "group"
     SUPERGROUP = "supergroup"
@@ -31,10 +37,10 @@ class TgGroupChat(BaseModel):
     id: int
     type: TgGroupChatType
     title: str
-    description: Optional[str]
-    username: Optional[str]
-    is_forum: Optional[bool]
-    photo: Optional[str]  # if set, base64-encoded chat photo
+    description: str | None
+    username: str | None
+    is_forum: bool | None
+    photo: str | None  # if set, base64-encoded chat photo
 
 
 class TgBotCommand(BaseModel):
@@ -60,7 +66,7 @@ class TgBotUser(BaseModel):
 
     commands: list[TgBotCommand]
 
-    userpic: Optional[str]  # base64-encoded bot's avatar photo preview
+    userpic: str | None  # base64-encoded bot's avatar photo preview
 
     @classmethod
     async def fetch(cls, bot: AsyncTeleBot, telegram_files_downloader: TelegramFilesDownloader) -> "TgBotUser":
@@ -85,7 +91,7 @@ class TgBotUser(BaseModel):
         async for attempt in rate_limit_retry():
             with attempt:
                 bot_user_profile_photos = await bot.get_user_profile_photos(bot_user.id, limit=1)
-                bot_userpic_b64: Optional[str] = None
+                bot_userpic_b64: str | None = None
                 if bot_user_profile_photos.photos:
                     userpic_photos: list[list[tg.PhotoSize]] = bot_user_profile_photos.photos  # type: ignore
                     bot_userpic_b64 = await telegram_files_downloader.get_base64_file(
@@ -137,8 +143,8 @@ class LoggedInUser(BaseModel):
     auth_type: AuthType
     username: str  # internal username, not user-visible
     name: str
-    display_username: Optional[str] = None
-    userpic: Optional[str] = None
+    display_username: str | None = None
+    userpic: str | None = None
 
 
 class UpdateBotDisplayNamePayload(BaseModel):
@@ -153,8 +159,8 @@ class BotVersionInfo(BaseModel):
 class BotInfo(BaseModel):
     bot_id: str  # internal constructor bot id
     display_name: str  # user-facing name
-    running_version: Optional[int]  # None = bot not running
-    running_version_info: Optional[BotVersionInfo]  # None = bot not running
+    running_version: int | None  # None = bot not running
+    running_version_info: BotVersionInfo | None  # None = bot not running
     last_versions: list[BotVersionInfo]  # versions, including last and running (if present) versions
     last_events: list[BotEvent]
     forms_with_responses: list[FormInfoBasic]
@@ -168,9 +174,9 @@ BotInfoList = TypeAdapter(list[BotInfo])
 
 class SaveBotConfigVersionPayload(BaseModel):
     config: BotConfig
-    version_message: Optional[str]
+    version_message: str | None
     start: bool
-    display_name: Optional[str] = None  # to update display name together with config
+    display_name: str | None = None  # to update display name together with config
 
 
 class StartBotPayload(BaseModel):

@@ -6,12 +6,14 @@ import json
 import logging
 import mimetypes
 import re
+import uuid
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
 from typing import Optional, Type, TypeVar
 
 import pydantic
+import slugify
 from aiohttp import hdrs, web
 from aiohttp_swagger import setup_swagger  # type: ignore
 from telebot import AsyncTeleBot
@@ -27,6 +29,7 @@ from telebot_constructor.app_models import (
     BotInfo,
     BotInfoList,
     BotTokenPayload,
+    BotTokenValidationResult,
     BotVersionsPage,
     FormResultsPage,
     LoggedInUser,
@@ -387,17 +390,19 @@ class ModuliApp:
 
         return await self.secret_store.remove_secret(secret_name, owner_id)
 
-    async def validate_bot_token(self, token: str, must_be_unused: bool) -> bool:
+    async def validate_bot_token(self, token: str) -> BotTokenValidationResult | None:
         bot = self._bot_factory(token)
         bot_user = await load_bot_user(bot)
         if bot_user is None:
-            return False
-        if must_be_unused:
-            if await has_webhook(bot):
-                return False
-            if await self.store.is_token_hash_saved(hash_token(token)):
-                return False
-        return True
+            return None
+        return BotTokenValidationResult(
+            name=bot_user.full_name,
+            username=bot_user.username or "",  # guaranteed in practice
+            suggested_bot_id=(
+                slugify.slugify(bot_user.full_name, max_length=64, word_boundary=True) + "-" + str(uuid.uuid4())[:8]
+            ),
+            is_used=await has_webhook(bot) or await self.store.is_token_hash_saved(hash_token(token)),
+        )
 
     # region: API endpoints
 
@@ -427,7 +432,8 @@ class ModuliApp:
 
             is_token = request.query.get("is_token", "false") == "true"
             if is_token:
-                if not await self.validate_bot_token(secret_value, must_be_unused=True):
+                res = await self.validate_bot_token(secret_value)
+                if res is None or res.is_used:
                     raise web.HTTPBadRequest(reason="Token is invalid or already used")
 
             result = await self.secret_store.save_secret(
@@ -986,24 +992,21 @@ class ModuliApp:
         async def validate_bot_token(request: web.Request) -> web.Response:
             """
             ---
-            description: Validate Telegram bot token
+            description: Validate Telegram bot token and return some additional info in case it's valid
             produces:
             - application/json
             responses:
                 "200":
                     description: OK
                 "400":
-                    description: Invalid token (with forwarded Telegram bot API response)
+                    description: Invalid token
             """
             _ = await self.authenticate(request)
             token_payload = await self.parse_body_as_model(request, BotTokenPayload)
-            if await self.validate_bot_token(
-                token=token_payload.token,
-                must_be_unused=request.query.get("must_be_unused", "false") == "true",
-            ):
-                return web.Response(text="Token is valid")
-            else:
-                raise web.HTTPBadRequest(reason="Bot token validation failed")
+            res = await self.validate_bot_token(token_payload.token)
+            if res is None:
+                raise web.HTTPNotFound(reason="Invalid bot token")
+            return web.json_response(data=res.model_dump(), status=200)
 
         # endregion
         ##################################################################################

@@ -444,6 +444,34 @@
       "title": "BotStoppedEvent",
       "type": "object"
     },
+    "BotTokenValidationResult": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "username": {
+          "title": "Username",
+          "type": "string"
+        },
+        "suggested_bot_id": {
+          "title": "Suggested Bot Id",
+          "type": "string"
+        },
+        "is_used": {
+          "title": "Is Used",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "username",
+        "suggested_bot_id",
+        "is_used"
+      ],
+      "title": "BotTokenValidationResult",
+      "type": "object"
+    },
     "BotVersionInfo": {
       "properties": {
         "version": {
@@ -2425,6 +2453,9 @@
     },
     "alert_chat_id_payload": {
       "$ref": "#/$defs/SetAlertChatIdPayload"
+    },
+    "bot_token_validation_result": {
+      "$ref": "#/$defs/BotTokenValidationResult"
     }
   },
   "required": [
@@ -2443,7 +2474,8 @@
     "form_results_page",
     "bot_errors_page",
     "bot_versions_page",
-    "alert_chat_id_payload"
+    "alert_chat_id_payload",
+    "bot_token_validation_result"
   ],
   "title": "BackendDataModels",
   "type": "object"
