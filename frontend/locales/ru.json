@@ -33,7 +33,8 @@
         "p4": "Дайте боту имя и @username",
         "p5": "Скопируйте токен вашего бота"
       },
-      "generic_error": "Ошибка"
+      "generic_error": "Ошибка",
+      "already_used_token_error": "Токен уже использован!"
     }
   },
   "generic": {

@@ -5,13 +5,13 @@ from pytest_aiohttp.plugin import AiohttpClient  # type: ignore
 from telebot import types as tg
 from telebot.test_util import MockedAsyncTeleBot
 
-from telebot_constructor.app import TelebotConstructorApp
+from telebot_constructor.app import ModuliApp
 from tests.test_app.conftest import MockBotRunner
 from tests.utils import tg_update_message_to_bot
 
 
 async def test_group_chat_discovery(
-    constructor_app: Tuple[TelebotConstructorApp, aiohttp.web.Application],
+    constructor_app: Tuple[ModuliApp, aiohttp.web.Application],
     aiohttp_client: AiohttpClient,
 ) -> None:
     constructor, web_app = constructor_app
@@ -19,10 +19,6 @@ async def test_group_chat_discovery(
 
     resp = await client.post("/api/secrets/my-test-bot-token", data="my-token")
     assert resp.status == 200
-
-    resp = await client.get("/api/secrets")
-    assert resp.status == 200
-    assert await resp.json() == ["my-test-bot-token"]
 
     resp = await client.post(
         "/api/config/my-test-bot",

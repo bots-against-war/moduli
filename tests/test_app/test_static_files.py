@@ -4,11 +4,11 @@ from typing import Tuple
 import aiohttp.web
 from pytest_aiohttp.plugin import AiohttpClient  # type: ignore
 
-from telebot_constructor.app import TelebotConstructorApp
+from telebot_constructor.app import ModuliApp
 
 
 async def test_serve_index(
-    constructor_app: Tuple[TelebotConstructorApp, aiohttp.web.Application], aiohttp_client: AiohttpClient
+    constructor_app: Tuple[ModuliApp, aiohttp.web.Application], aiohttp_client: AiohttpClient
 ) -> None:
     constructor, web_app = constructor_app
     client = await aiohttp_client(web_app)
@@ -32,7 +32,7 @@ async def test_serve_index(
 
 
 async def test_serve_static_files(
-    constructor_app: Tuple[TelebotConstructorApp, aiohttp.web.Application], aiohttp_client: AiohttpClient
+    constructor_app: Tuple[ModuliApp, aiohttp.web.Application], aiohttp_client: AiohttpClient
 ) -> None:
     constructor, web_app = constructor_app
     client = await aiohttp_client(web_app)
@@ -46,9 +46,7 @@ async def test_serve_static_files(
     assert await resp.text("utf-8") == "console.log(foo);"
 
 
-async def test_cors(
-    constructor_app: Tuple[TelebotConstructorApp, aiohttp.web.Application], aiohttp_client: AiohttpClient
-) -> None:
+async def test_cors(constructor_app: Tuple[ModuliApp, aiohttp.web.Application], aiohttp_client: AiohttpClient) -> None:
     _, web_app = constructor_app
     client = await aiohttp_client(web_app)
 
@@ -71,7 +69,7 @@ async def test_cors(
 
 
 async def test_prefilled_messages(
-    constructor_app: Tuple[TelebotConstructorApp, aiohttp.web.Application],
+    constructor_app: Tuple[ModuliApp, aiohttp.web.Application],
     aiohttp_client: AiohttpClient,
 ) -> None:
     _, web_app = constructor_app

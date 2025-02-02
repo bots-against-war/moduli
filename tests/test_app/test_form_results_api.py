@@ -5,7 +5,7 @@ import aiohttp.web
 from pytest_aiohttp.plugin import AiohttpClient  # type: ignore
 from telebot.test_util import MockedAsyncTeleBot
 
-from telebot_constructor.app import TelebotConstructorApp
+from telebot_constructor.app import ModuliApp
 from tests.test_app.conftest import MockBotRunner
 from tests.utils import (
     RECENT_TIMESTAMP,
@@ -16,7 +16,7 @@ from tests.utils import (
 
 
 async def test_form_results_api(
-    constructor_app: Tuple[TelebotConstructorApp, aiohttp.web.Application],
+    constructor_app: Tuple[ModuliApp, aiohttp.web.Application],
     aiohttp_client: AiohttpClient,
 ) -> None:
     constructor, web_app = constructor_app

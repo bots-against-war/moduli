@@ -4,17 +4,14 @@ import enum
 import logging
 import os
 import textwrap
-import uuid
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, TypedDict
 
 import aiohttp
-from slugify import slugify
 from telebot import AsyncTeleBot
 from telebot import types as tg
 from telebot.runner import BotRunner
 from telebot_components.form.field import (
-    BadFieldValueError,
     FormField,
     MessageProcessingResult,
     PlainTextField,
@@ -54,45 +51,39 @@ from telebot_constructor.user_flow.blocks.human_operator import (
 from telebot_constructor.user_flow.entrypoints.command import CommandEntryPoint
 
 
-async def load_bot_user(token: str) -> tg.User | None:
-    bot = AsyncTeleBot(token=token)
-    try:
-        return await bot.get_me()
-    except Exception:
-        return None
-
-
 def preproc_text(t: str) -> str:
     return textwrap.dedent(t).strip()
 
 
 @dataclass
 class BotTokenField(FormField[str]):
+    api: TrustedModuliApiClient
+
     async def process_message(
         self,
         message: tg.Message,
         language: MaybeLanguage,
         dynamic_data: Any,
     ) -> MessageProcessingResult[str]:
-        token = message.text_content
-        if await load_bot_user(token):
-            return MessageProcessingResult(
-                response_to_user=None,
-                parsed_value=token,
-            )
-        else:
+        token = message.text_content.strip()
+        res = await self.api.validate_token(user=message.from_user, token=token)
+        if res is None:
             return MessageProcessingResult(
                 response_to_user="Проверьте валидность токена!",
                 parsed_value=None,
             )
-
-
-class HtmlTextField(PlainTextField):
-    def parse(self, message):
-        text = message.html_text
-        if not text:
-            raise BadFieldValueError(self.empty_text_error_msg)
-        return text
+        if res.is_used:
+            return MessageProcessingResult(
+                response_to_user=(
+                    "Токен уже использован для создания бота! Создайте нового бота или "
+                    + "новый токен для существующего в @BotFather."
+                ),
+                parsed_value=None,
+            )
+        return MessageProcessingResult(
+            response_to_user=None,
+            parsed_value=token,
+        )
 
 
 class AnonymizeUsers(enum.Enum):
@@ -100,49 +91,10 @@ class AnonymizeUsers(enum.Enum):
     NO = "Нет"
 
 
-moduli_client_form = Form.branching(
-    [
-        BotTokenField(
-            name="token",
-            required=True,
-            query_message=preproc_text(
-                """
-                (1/3) Создайте бота
-
-                • Перейдите в @BotFather
-                • Введите команду / newbot
-                • Дайте боту имя и @юзернейм
-                • Получите токен вашего бота (выглядит так: <code>4839574812:AAFD39kkdpWt3ywyRZergyOLMaJhac60qc</code>), скопируйте и пришлите в этот чат.
-
-                Не подключайте боты, которые используются в других сервисах (Livegram, Dialogflow и т.д.).
-                """  # noqa: E501
-            ),
-        ),
-        HtmlTextField(
-            name="welcome",
-            required=True,
-            query_message="(2/3) Напишите сообщение, которое будет появляться сразу после кнопки “start”.",
-            empty_text_error_msg="Сообщение не может быть пустым!",
-        ),
-        SingleSelectField(
-            name="anonymize",
-            required=True,
-            query_message="(3/3) Создатели бота всегда анонимны. Если вы хотите скрывать идентичность ваших собеседни:ц, мы советуем включить режим анонимизации – вы сможете отвечать им, но не увидите их имя и @юзернейм. Включить?",  # noqa: E501
-            EnumClass=AnonymizeUsers,
-            invalid_enum_value_error_msg="Используйте кнопки меню для ответа! Если вы не видите кнопки, нажмите на иконку с 5 точками рядом с полем ввода.",  # noqa: E501
-            menu_row_width=2,
-        ),
-    ]
-)
-
-
 class ModuliClientFormResult(TypedDict):
     token: str
     welcome: str
     anonymize: AnonymizeUsers
-
-
-moduli_client_form.validate_result_type(ModuliClientFormResult)
 
 
 def moduli_bot_form_handler(
@@ -153,6 +105,42 @@ def moduli_bot_form_handler(
     after: Callable[[tg.User], Awaitable[Any]] | None = None,
 ) -> FormHandler:
     """Simple bot interface to telebot constructor, providing livegram-like frontend to create feedback bots"""
+
+    moduli_client_form = Form.branching(
+        [
+            BotTokenField(
+                name="token",
+                required=True,
+                query_message=preproc_text(
+                    """
+                    (1/3) Создайте бота
+
+                    • Перейдите в @BotFather
+                    • Введите команду / newbot
+                    • Дайте боту имя и @юзернейм
+                    • Получите токен вашего бота (выглядит так: <code>4839574812:AAFD39kkdpWt3ywyRZergyOLMaJhac60qc</code>), скопируйте и пришлите в этот чат.
+
+                    Не подключайте боты, которые используются в других сервисах (Livegram, Dialogflow и т.д.).
+                    """  # noqa: E501
+                ),
+                api=api,
+            ),
+            PlainTextField(
+                name="welcome",
+                required=True,
+                query_message="(2/3) Напишите сообщение, которое будет появляться сразу после кнопки “start”.",
+                empty_text_error_msg="Сообщение не может быть пустым!",
+            ),
+            SingleSelectField(
+                name="anonymize",
+                required=True,
+                query_message="(3/3) Создатели бота всегда анонимны. Если вы хотите скрывать идентичность ваших собеседни:ц, мы советуем включить режим анонимизации – вы сможете отвечать им, но не увидите их имя и @юзернейм. Включить?",  # noqa: E501
+                EnumClass=AnonymizeUsers,
+                invalid_enum_value_error_msg="Используйте кнопки меню для ответа! Если вы не видите кнопки, нажмите на иконку с 5 точками рядом с полем ввода.",  # noqa: E501
+                menu_row_width=2,
+            ),
+        ]
+    )
 
     form_handler = FormHandler[ModuliClientFormResult, Any](
         redis=redis,
@@ -175,18 +163,20 @@ def moduli_bot_form_handler(
 
         token = context.result["token"]
         anonymize_users = context.result["anonymize"] is AnonymizeUsers.YES
-        bot_user = await load_bot_user(token)
-        if bot_user is None:
+
+        res = await api.validate_token(user=user, token=token)
+        if res is None or res.is_used:
             await bot.send_message(
                 chat_id=user.id,
                 text="Что-то не так с вашим токеном, проверьте его валидность и заполните форму ещё раз!",
             )
             return
-        bot_name = bot_user.full_name
+        bot_name = res.name
+        moduli_bot_id = res.suggested_bot_id
+        bot_username = res.username
 
-        moduli_bot_id = slugify(bot_name, max_length=64, word_boundary=True) + "-" + str(uuid.uuid4())[:8]
         token_secret_name = f"token-for-{moduli_bot_id}"
-        if not await api.create_secret(user, name=token_secret_name, value=token):
+        if not await api.create_token_secret(user, name=token_secret_name, value=token):
             await bot.send_message(user.id, text="Не получилось создать бота...")
             return
 
@@ -213,7 +203,7 @@ def moduli_bot_form_handler(
                                 Content(
                                     text=ContentText(
                                         text=context.result["welcome"],
-                                        markup=TextMarkup.HTML,
+                                        markup=TextMarkup.NONE,
                                     ),
                                     attachments=[],
                                 )
@@ -278,14 +268,14 @@ def moduli_bot_form_handler(
             return
         await bot.send_message(
             user.id,
-            f"Браво! Ваш бот @{bot_user.username} запущен – "
+            f"Браво! Ваш бот @{bot_username} запущен – "
             + 'для проверки нажмите "start" и напишите ему любое сообщение.',
         )
         await asyncio.sleep(0.15)
         studio_link = api.base_url.strip("/") + f"/studio/{moduli_bot_id}"
         await bot.send_message(
             user.id,
-            f"Сообщения от пользователь:ниц будут приходить в чат с @{bot_user.username}. Ответы "
+            f"Сообщения от пользователь:ниц будут приходить в чат с @{bot_username}. Ответы "
             + "(по свайпу влево или двойному нажатию) будут отправлены от лица бота.\n\n"
             + f"В {html_link(text='веб-версии конструктора', href=studio_link)} можно подключить админ-чат, "
             + "где сообщения смогут обрабатывать несколько человек. Там же доступно редактирование бота "

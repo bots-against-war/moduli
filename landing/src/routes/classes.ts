@@ -48,6 +48,6 @@ export function typography(t: TypographyType): string {
   return classes.join(" ");
 }
 
-export const buttonPrimary = "bg-gray-900 text-white hover:bg-gray-50 hover:text-gray-900";
+export const buttonPrimary = "bg-gray-900 text-white hover:bg-white hover:text-gray-900";
 export const buttonSecondary = "bg-white text-gray-900 hover:bg-gray-200 shadow-secondary-btn";
 export const buttonLink = "text-gray-900 p-0 hover:underline";

@@ -6,8 +6,8 @@ export async function listSecrets(): Promise<Result<string[], string>> {
   return await toDataResult(res);
 }
 
-export async function saveSecret(name: string, value: string): Promise<Result<null>> {
-  const res = await fetchApi(`/secrets/${encodeURIComponent(name)}`, {
+export async function saveTokenSecret(name: string, value: string): Promise<Result<null>> {
+  const res = await fetchApi(`/secrets/${encodeURIComponent(name)}?is_token=true`, {
     method: "POST",
     body: value,
   });

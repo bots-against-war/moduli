@@ -1,11 +1,11 @@
 import aiohttp.web
 from pytest_aiohttp.plugin import AiohttpClient  # type: ignore
 
-from telebot_constructor.app import TelebotConstructorApp
+from telebot_constructor.app import ModuliApp
 
 
 async def test_media_api(
-    constructor_app: tuple[TelebotConstructorApp, aiohttp.web.Application],
+    constructor_app: tuple[ModuliApp, aiohttp.web.Application],
     aiohttp_client: AiohttpClient,
 ) -> None:
     _, web_app = constructor_app

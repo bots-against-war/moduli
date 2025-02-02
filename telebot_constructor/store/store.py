@@ -8,6 +8,7 @@ from telebot_components.stores.generic import (
     KeyDictStore,
     KeyListStore,
     KeyVersionedValueStore,
+    SetStore,
 )
 
 from telebot_constructor.app_models import BotInfo, BotVersionInfo
@@ -30,7 +31,7 @@ def set_current_timestamp(data: BotConfigVersionMetadata | BotEvent):
         data["timestamp"] = time.time()
 
 
-class TelebotConstructorStore:
+class Store:
     """Main Redis-based application storage class"""
 
     def __init__(self, redis: RedisInterface) -> None:
@@ -70,9 +71,16 @@ class TelebotConstructorStore:
             dumper=str,
             loader=str,
         )
+        self._hashed_tokens_store = SetStore(
+            name="hashed-tokens",
+            prefix=CONSTRUCTOR_PREFIX,
+            redis=redis,
+            expiration_time=None,
+            dumper=str,
+            loader=str,
+        )
 
         self.form_results = FormResultsStore(redis=redis)
-
         self.errors = BotErrorsStore(redis=redis)
 
     # bot config store CRUD
@@ -255,3 +263,12 @@ class TelebotConstructorStore:
             return actor_id  # the actor owns the bot, they're the boss
 
         return None
+
+    async def save_used_token_hash(self, hash: str) -> None:
+        await self._hashed_tokens_store.add(hash)
+
+    async def remove_used_token_hash(self, hash: str) -> None:
+        await self._hashed_tokens_store.remove(hash)
+
+    async def is_token_hash_saved(self, hash: str) -> bool:
+        return await self._hashed_tokens_store.includes(hash)

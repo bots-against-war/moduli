@@ -1,6 +1,6 @@
 import { getContext, type ComponentProps, type SvelteComponent } from "svelte";
 import type { Newable } from "ts-essentials";
-import { saveSecret } from "./api/secrets";
+import { saveTokenSecret } from "./api/secrets";
 import ConfirmationModal from "./components/ConfirmationModal.svelte";
 
 // rust-like result type with convenience functions
@@ -101,8 +101,7 @@ export const INFO_MODAL_OPTIONS = {
 export async function createBotTokenSecret(botId: string, token: string): Promise<Result<string, string>> {
   let secretName = botId + "-token-" + crypto.randomUUID().slice(0, 8);
   console.debug("Generated secret name", secretName);
-  // TODO: validate that bot token is saved only once, e.g. by demanding it to be a unique secret
-  let res = await saveSecret(secretName, token);
+  let res = await saveTokenSecret(secretName, token);
   let saveSecretError = getError(res);
   if (saveSecretError !== null) {
     return err(saveSecretError);

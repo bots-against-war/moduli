@@ -6,7 +6,10 @@ import aiohttp
 from multidict import istr
 from telebot import types as tg
 
-from telebot_constructor.app_models import SaveBotConfigVersionPayload
+from telebot_constructor.app_models import (
+    BotTokenValidationResult,
+    SaveBotConfigVersionPayload,
+)
 from telebot_constructor.constants import (
     TRUSTED_CLIENT_TOKEN_HEADER,
     TRUSTED_CLIENT_USER_ID_HEADER,
@@ -39,9 +42,20 @@ class TrustedModuliApiClient:
             logger.info(f"Got response: {text} ({resp.status})")
         logger.info(f"moduli API pinged in {time.time() - start:.3f} sec")
 
-    async def create_secret(self, user: tg.User, name: str, value: str) -> bool:
+    async def validate_token(self, user: tg.User, token: str) -> BotTokenValidationResult | None:
         async with self.aiohttp_session.post(
-            self.api_url(f"/secrets/{name}"),
+            self.api_url("/validate-token"),
+            headers=self.auth_headers(user),
+            data=token,
+        ) as resp:
+            if resp.ok:
+                return BotTokenValidationResult.model_validate_json(await resp.json())
+            else:
+                return None
+
+    async def create_token_secret(self, user: tg.User, name: str, value: str) -> bool:
+        async with self.aiohttp_session.post(
+            self.api_url(f"/secrets/{name}?is_token=true"),
             headers=self.auth_headers(user),
             data=value,
         ) as resp:

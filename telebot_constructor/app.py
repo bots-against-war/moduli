@@ -6,12 +6,14 @@ import json
 import logging
 import mimetypes
 import re
+import uuid
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
 from typing import Optional, Type, TypeVar
 
 import pydantic
+import slugify
 from aiohttp import hdrs, web
 from aiohttp_swagger import setup_swagger  # type: ignore
 from telebot import AsyncTeleBot
@@ -27,6 +29,7 @@ from telebot_constructor.app_models import (
     BotInfo,
     BotInfoList,
     BotTokenPayload,
+    BotTokenValidationResult,
     BotVersionsPage,
     FormResultsPage,
     LoggedInUser,
@@ -59,11 +62,7 @@ from telebot_constructor.store.form_results import (
     GlobalFormId,
 )
 from telebot_constructor.store.media import Media, MediaStore
-from telebot_constructor.store.store import (
-    BotConfigVersionMetadata,
-    BotVersion,
-    TelebotConstructorStore,
-)
+from telebot_constructor.store.store import BotConfigVersionMetadata, BotVersion, Store
 from telebot_constructor.store.types import (
     BotDeletedEvent,
     BotEditedEvent,
@@ -75,6 +74,8 @@ from telebot_constructor.telegram_files_downloader import (
     TelegramFilesDownloader,
 )
 from telebot_constructor.utils import (
+    has_webhook,
+    hash_token,
     log_prefix,
     page_params_to_redis_indices,
     send_telegram_alert,
@@ -95,7 +96,7 @@ class BotAccessAuthorization:
     owner_id: str
 
 
-class TelebotConstructorApp:
+class ModuliApp:
     """
     Main application class, managing aiohttp app setup (routes, middlewares) and running bots (via bot runner)
     """
@@ -118,7 +119,7 @@ class TelebotConstructorApp:
         self.add_swagger = add_swagger
 
         self.telegram_files_downloader = telegram_files_downloader or InmemoryCacheTelegramFilesDownloader()
-        self.store = TelebotConstructorStore(redis)
+        self.store = Store(redis)
         self.store.errors.error_callback = self.send_alert_on_error
         self.media_store = media_store
         self.group_chat_discovery_handler = GroupChatDiscoveryHandler(
@@ -379,6 +380,32 @@ class TelebotConstructorApp:
             ),
         )
 
+    async def delete_secret(self, owner_id: str, secret_name: str, is_token: bool) -> bool:
+        if is_token:
+            secret_value = await self.secret_store.get_secret(secret_name, owner_id)
+            if secret_value is None:
+                return False
+            await self.store.remove_used_token_hash(hash_token(secret_value))
+
+        return await self.secret_store.remove_secret(secret_name, owner_id)
+
+    async def validate_bot_token(self, token: str) -> BotTokenValidationResult | str:
+        bot = self._bot_factory(token)
+        try:
+            bot_user = await bot.get_me()
+        except Exception as e:
+            return str(e)
+        if bot_user is None:
+            return None
+        return BotTokenValidationResult(
+            name=bot_user.full_name,
+            username=bot_user.username or "",  # guaranteed in practice
+            suggested_bot_id=(
+                slugify.slugify(bot_user.full_name, max_length=64, word_boundary=True) + "-" + str(uuid.uuid4())[:8]
+            ),
+            is_used=await has_webhook(bot) or await self.store.is_token_hash_saved(hash_token(token)),
+        )
+
     # region: API endpoints
 
     async def create_constructor_web_app(self) -> web.Application:
@@ -390,7 +417,6 @@ class TelebotConstructorApp:
         ##################################################################################
         # region secrets API
 
-        # TODO: dedicated token saving method with additional validation
         @routes.post("/api/secrets/{secret_name}")
         async def upsert_secret(request: web.Request) -> web.Response:
             """
@@ -405,13 +431,26 @@ class TelebotConstructorApp:
             secret_value = await request.text()
             if not secret_value:
                 raise web.HTTPBadRequest(reason="Secret can't be empty")
+
+            is_token = request.query.get("is_token", "false") == "true"
+            if is_token:
+                res = await self.validate_bot_token(secret_value)
+                if isinstance(res, str):
+                    return web.HTTPBadRequest(reason=res)
+                elif res.is_used:
+                    raise web.HTTPBadRequest(reason="Token is invalid or already used")
+
             result = await self.secret_store.save_secret(
                 secret_name=secret_name,
                 secret_value=secret_value,
                 owner_id=owner_id,
                 allow_update=True,
             )
-            return web.Response(text=result.message, status=200 if result.is_saved else 400)
+            if not result.is_saved:
+                raise web.HTTPInternalServerError(reason="Failed to save the token to secret store")
+            if is_token:
+                await self.store.save_used_token_hash(hash_token(secret_value))
+            return web.Response(text=result.message, status=200)
 
         @routes.delete("/api/secrets/{secret_name}")
         async def delete_secret(request: web.Request) -> web.Response:
@@ -422,15 +461,14 @@ class TelebotConstructorApp:
                 "201":
                     description: Success
             """
-            owner_id = await self.authenticate(request)
-            secret_name = self.parse_secret_name(request)
-            if await self.secret_store.remove_secret(
-                secret_name=secret_name,
-                owner_id=owner_id,
+            if await self.delete_secret(
+                owner_id=await self.authenticate(request),
+                secret_name=self.parse_secret_name(request),
+                is_token=request.query.get("is_token", "false") == "true",
             ):
-                return web.Response(text="Removed", status=200)
+                return web.Response(text="Secret removed")
             else:
-                return web.Response(text="Secret not found", status=404)
+                raise web.HTTPNotFound(reason="Secret not found")
 
         @routes.get("/api/secrets")
         async def list_secret_names(request: web.Request) -> web.Response:
@@ -542,7 +580,7 @@ class TelebotConstructorApp:
             config = await self.load_bot_config(a.owner_id, a.bot_id, version=-1)
             await self.stop_bot(a)
             await self.store.remove_bot_config(a.owner_id, a.bot_id)
-            await self.secret_store.remove_secret(config.token_secret_name, owner_id=a.owner_id)
+            await self.delete_secret(owner_id=a.owner_id, secret_name=config.token_secret_name, is_token=True)
             await self.store.save_event(
                 a.owner_id,
                 a.bot_id,
@@ -958,22 +996,21 @@ class TelebotConstructorApp:
         async def validate_bot_token(request: web.Request) -> web.Response:
             """
             ---
-            description: Validate Telegram bot token
+            description: Validate Telegram bot token and return some additional info in case it's valid
             produces:
             - application/json
             responses:
                 "200":
                     description: OK
                 "400":
-                    description: Invalid token (with forwarded Telegram bot API response)
+                    description: Invalid token (Telegram Bot API response forwarded)
             """
             _ = await self.authenticate(request)
             token_payload = await self.parse_body_as_model(request, BotTokenPayload)
-            try:
-                await AsyncTeleBot(token=token_payload.token).get_me()
-            except Exception as e:
-                raise web.HTTPBadRequest(reason=f"Bot token validation failed ({e})")
-            return web.Response(text="Token is valid")
+            res = await self.validate_bot_token(token_payload.token)
+            if isinstance(res, str):
+                raise web.HTTPBadRequest(reason=res)
+            return web.json_response(data=res.model_dump(), status=200)
 
         # endregion
         ##################################################################################
@@ -1341,3 +1378,6 @@ class TelebotConstructorApp:
         await self.setup()
 
     # endregion
+
+
+TelebotConstructorApp = ModuliApp
