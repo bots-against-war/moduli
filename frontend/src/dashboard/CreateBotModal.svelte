@@ -40,7 +40,8 @@
 
     let validationResult = await validateBotToken(botToken);
     if (!validationResult.ok) {
-      error = $t("listing.newbot.incorrect_token_error");
+      errorTitle = $t("listing.newbot.incorrect_token_error");
+      error = validationResult.error;
       return;
     }
     const tokenValidationResult = validationResult.data;
@@ -51,16 +52,15 @@
 
     const botDisplayName = tokenValidationResult.name;
 
-    let newTokenSecretRes = await createBotTokenSecret(tokenValidationResult.suggested_bot_id, botToken);
-    let newTokenSaveErr = getError(newTokenSecretRes);
-    if (newTokenSaveErr !== null) {
+    let saveTokenSecretResult = await createBotTokenSecret(tokenValidationResult.suggested_bot_id, botToken);
+    if (!saveTokenSecretResult.ok) {
       errorTitle = $t("listing.newbot.failed_to_save_token_error");
-      error = newTokenSaveErr;
+      error = saveTokenSecretResult.error;
       return;
     }
 
     const config: BotConfig = {
-      token_secret_name: unwrap(newTokenSecretRes),
+      token_secret_name: saveTokenSecretResult.data,
       user_flow_config: {
         entrypoints: [
           {

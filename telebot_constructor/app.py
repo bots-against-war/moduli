@@ -76,7 +76,6 @@ from telebot_constructor.telegram_files_downloader import (
 from telebot_constructor.utils import (
     has_webhook,
     hash_token,
-    load_bot_user,
     log_prefix,
     page_params_to_redis_indices,
     send_telegram_alert,
@@ -390,9 +389,12 @@ class ModuliApp:
 
         return await self.secret_store.remove_secret(secret_name, owner_id)
 
-    async def validate_bot_token(self, token: str) -> BotTokenValidationResult | None:
+    async def validate_bot_token(self, token: str) -> BotTokenValidationResult | str:
         bot = self._bot_factory(token)
-        bot_user = await load_bot_user(bot)
+        try:
+            bot_user = await bot.get_me()
+        except Exception as e:
+            return str(e)
         if bot_user is None:
             return None
         return BotTokenValidationResult(
@@ -433,7 +435,9 @@ class ModuliApp:
             is_token = request.query.get("is_token", "false") == "true"
             if is_token:
                 res = await self.validate_bot_token(secret_value)
-                if res is None or res.is_used:
+                if isinstance(res, str):
+                    return web.HTTPBadRequest(reason=res)
+                elif res.is_used:
                     raise web.HTTPBadRequest(reason="Token is invalid or already used")
 
             result = await self.secret_store.save_secret(
@@ -999,13 +1003,13 @@ class ModuliApp:
                 "200":
                     description: OK
                 "400":
-                    description: Invalid token
+                    description: Invalid token (Telegram Bot API response forwarded)
             """
             _ = await self.authenticate(request)
             token_payload = await self.parse_body_as_model(request, BotTokenPayload)
             res = await self.validate_bot_token(token_payload.token)
-            if res is None:
-                raise web.HTTPNotFound(reason="Invalid bot token")
+            if isinstance(res, str):
+                raise web.HTTPBadRequest(reason=res)
             return web.json_response(data=res.model_dump(), status=200)
 
         # endregion
