@@ -19,19 +19,24 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class TrustedModuliApiClient:
-    aiohttp_session: aiohttp.ClientSession
+class TrustedModuliApiClientConfig:
     base_url: str
     trusted_client_token: str
 
+
+@dataclass
+class TrustedModuliApiClient:
+    aiohttp_session: aiohttp.ClientSession
+    config: TrustedModuliApiClientConfig
+
     def auth_headers(self, user: tg.User) -> dict[istr, str]:
         return {
-            TRUSTED_CLIENT_TOKEN_HEADER: self.trusted_client_token,
+            TRUSTED_CLIENT_TOKEN_HEADER: self.config.trusted_client_token,
             TRUSTED_CLIENT_USER_ID_HEADER: str(user.id),
         }
 
     def api_url(self, path: str) -> str:
-        base = self.base_url.rstrip("/")
+        base = self.config.base_url.rstrip("/")
         path = path.lstrip("/")
         return "/".join((base, "api", path))
 
@@ -46,11 +51,12 @@ class TrustedModuliApiClient:
         async with self.aiohttp_session.post(
             self.api_url("/validate-token"),
             headers=self.auth_headers(user),
-            data=token,
+            json={"token": token},
         ) as resp:
             if resp.ok:
-                return BotTokenValidationResult.model_validate_json(await resp.json())
+                return BotTokenValidationResult.model_validate_json(await resp.text())
             else:
+                logger.info(f"Token validation error: {await resp.text()}")
                 return None
 
     async def create_token_secret(self, user: tg.User, name: str, value: str) -> bool:
