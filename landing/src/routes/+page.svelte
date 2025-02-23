@@ -277,7 +277,7 @@
   </div>
 </main>
 
-<footer class="w-full">
+<footer class="w-full py-2 px-10">
   <div class="flex flex-row justify-between items-center py-3 px-3">
     <Logo />
     <span class="justify-self-center text-center">
