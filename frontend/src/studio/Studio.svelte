@@ -58,16 +58,17 @@
   } from "./utils";
 
   const open = getModalOpener();
-  const WORKING_COPY_LS_KEY = "workingCopyUserFlowConfig";
   const README_SHOWN_LS_KEY = "readmeShown";
 
   export let botId: string;
   export let botConfig: BotConfig;
   export let readonly: boolean;
 
+  const workingCopyLSKey = `configWorkingCopy-${botId}`;
+
   let ufConfig = botConfig.user_flow_config;
   let savedUfConfig = clone(ufConfig);
-  const oldWorkingCopyUfConfigJson = localStorage.getItem(WORKING_COPY_LS_KEY);
+  const oldWorkingCopyUfConfigJson = localStorage.getItem(workingCopyLSKey);
   // node positions are stored separately = moving blocks does not trigger reactivity, edit history, etc
   let nodeDisplayCoords = ufConfig.node_display_coords;
 
@@ -91,11 +92,11 @@
     if (saveWorkingCopyScheduled) return;
     saveWorkingCopyScheduled = true;
     await sleep(100); // debounce: avoid rapid consecutive saves
-    localStorage.setItem(WORKING_COPY_LS_KEY, JSON.stringify(ufConfig));
+    localStorage.setItem(workingCopyLSKey, JSON.stringify(ufConfig));
     console.debug("Working copy saved");
     saveWorkingCopyScheduled = false;
   };
-  const deleteWorkingCopy = () => localStorage.removeItem(WORKING_COPY_LS_KEY);
+  const deleteWorkingCopy = () => localStorage.removeItem(workingCopyLSKey);
 
   $: {
     // reactive block running on every config update
