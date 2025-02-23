@@ -80,9 +80,8 @@ class BotTokenField(FormField[str]):
         lang = any_language_to_language_data(language)
         token = message.text_content.strip()
 
-        api_config: TrustedModuliApiClientConfig = dynamic_data
         async with aiohttp.ClientSession() as session:
-            api = TrustedModuliApiClient(session, api_config)
+            api = TrustedModuliApiClient(session, config=dynamic_data)
             res = await api.validate_token(user=message.from_user, token=token)
 
         if res is None:
