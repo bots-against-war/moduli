@@ -110,6 +110,7 @@ class ModuliApp:
         telegram_files_downloader: Optional[TelegramFilesDownloader] = None,
         media_store: MediaStore | None = None,
         add_swagger: bool = False,
+        server_side_shared_bots: dict[str, dict[str, set[str]]] | None = None,
     ) -> None:
         self.auth = auth
         self.secret_store = secret_store
@@ -129,6 +130,8 @@ class ModuliApp:
         # set during on of the setup/run methods to a concrete subclass
         self._runner: Optional[ConstructedBotRunner] = None
         self._bot_factory: BotFactory = AsyncTeleBot  # for overriding during tests
+
+        self._server_side_shared_bots = server_side_shared_bots or {}
 
     @property
     def runner(self) -> ConstructedBotRunner:
@@ -153,6 +156,12 @@ class ModuliApp:
         logged_in_user = await self._authenticate_full(request)
         return logged_in_user.username
 
+    def _lookup_server_side_shared_bot(self, bot_id: str, actor_id: str) -> str | None:
+        for owner_id, shared_with in self._server_side_shared_bots.get(bot_id, dict()).items():
+            if actor_id in shared_with:
+                return owner_id
+        return None
+
     async def authorize(
         self,
         request: web.Request,
@@ -161,7 +170,9 @@ class ModuliApp:
     ) -> BotAccessAuthorization:
         actor_id = await self.authenticate(request)
         bot_id = for_bot_id or self.parse_bot_id(request)
-        owner_id = await self.store.load_owner_id(actor_id, bot_id)
+        owner_id = await self.store.load_owner_id(actor_id, bot_id) or self._lookup_server_side_shared_bot(
+            bot_id, actor_id
+        )
         if owner_id is None:
             if bot_must_exist:
                 raise web.HTTPNotFound(reason=f'Bot "{bot_id}" does not exist')
