@@ -72,6 +72,9 @@ extend-ignore = [
     "E251", # conflicts with meaningful f"this is {value = }" 
     "E202",
 ]
+exclude = [
+    "telebot_constructor/client/bot.py"
+]
 
 [tool.coverage.report]
 omit = ['tests/**']
