@@ -70,15 +70,13 @@ def preproc_text(t: str) -> str:
 @dataclass
 class BotTokenField(FormField[str]):
     async def process_message(self, context: MessageProcessingContext[str]) -> MessageProcessingResult[str]:
-        language = context.language
-        message = context.message
-        assert language is not None
-        lang = any_language_to_language_data(language)
-        token = message.text_content.strip()
+        assert context.language is not None
+        lang = any_language_to_language_data(context.language)
+        token = context.message.text_content.strip()
 
         async with aiohttp.ClientSession() as session:
             api = TrustedModuliApiClient(session, config=context.dynamic_data)
-            res = await api.validate_token(user=message.from_user, token=token)
+            res = await api.validate_token(user=context.message.from_user, token=token)
 
         if res is None:
             return MessageProcessingResult(
