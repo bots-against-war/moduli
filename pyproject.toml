@@ -16,13 +16,11 @@ pytest-aiohttp = "^1.0.5"
 pytest-asyncio = "^0.23.7"
 python-dotenv = "^0.20.0"
 aioresponses = "^0.7.7"
-black = "^24.3.0"
-isort = "^5.10.1"
 pre-commit = "^2.19.0"
 mypy = "^1.4.1"
-flake8-pyproject = "^1.2.3"
 setuptools = "^73.0.1"
 yarb-against-war = "1.0.2"
+ruff = "^0.11.0"
 
 [tool.poetry-dynamic-versioning]
 enable = true
@@ -50,11 +48,13 @@ python-slugify = "^8.0.4"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
+[tool.ruff]
 line-length = 120
+indent-width = 4
+target-version = "py312"
 
-[tool.isort]
-profile = 'black'
+[tool.ruff.lint]
+extend-select = ["I"]  # check and fix imports
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -63,18 +63,6 @@ asyncio_mode = "auto"
 incremental = false
 files = '.'
 exclude = ["dist"]
-
-[tool.flake8]
-max-line-length = 120
-extend-ignore = [
-    "F841", # local variable 'xxx' is assigned to but never used
-    "E203", # whitespace before ':' (black formatting compatibility)
-    "E251", # conflicts with meaningful f"this is {value = }" 
-    "E202",
-]
-exclude = [
-    "telebot_constructor/client/bot.py"
-]
 
 [tool.coverage.report]
 omit = ['tests/**']

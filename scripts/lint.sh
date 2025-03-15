@@ -1,4 +1,1 @@
-isort .
-black .
-flake8
-mypy 
+ruff check --fix && ruff format && mypy

@@ -3,13 +3,13 @@ from typing import Any, Optional
 from pydantic import BaseModel
 from telebot_components.menu.menu import Menu as ComponentsMenu
 from telebot_components.menu.menu import MenuConfig as ComponentsMenuConfig
-from telebot_components.menu.menu import MenuHandler
-from telebot_components.menu.menu import MenuItem as ComponentsMenuItem
 from telebot_components.menu.menu import (
+    MenuHandler,
     MenuMechanism,
     TerminatorContext,
     TerminatorResult,
 )
+from telebot_components.menu.menu import MenuItem as ComponentsMenuItem
 from telebot_components.utils import TextMarkup
 
 from telebot_constructor.user_flow.blocks.base import UserFlowBlock

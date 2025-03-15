@@ -257,7 +257,7 @@ async def test_form_results_api(
             ],
             "last_versions": [
                 {
-                    "metadata": {"author_username": "no-auth", "message": "init", "timestamp": "<recent " "timestamp>"},
+                    "metadata": {"author_username": "no-auth", "message": "init", "timestamp": "<recent timestamp>"},
                     "version": 0,
                 }
             ],
@@ -304,7 +304,7 @@ async def test_form_results_api(
             ],
             "last_versions": [
                 {
-                    "metadata": {"author_username": "no-auth", "message": "init", "timestamp": "<recent " "timestamp>"},
+                    "metadata": {"author_username": "no-auth", "message": "init", "timestamp": "<recent timestamp>"},
                     "version": 0,
                 }
             ],

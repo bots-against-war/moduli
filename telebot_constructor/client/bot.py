@@ -13,6 +13,7 @@ from telebot import types as tg
 from telebot.runner import BotRunner
 from telebot_components.form.field import (
     FormField,
+    MessageProcessingContext,
     MessageProcessingResult,
     PlainTextField,
     SingleSelectField,
@@ -25,7 +26,6 @@ from telebot_components.form.handler import (
 )
 from telebot_components.language import (
     Language,
-    MaybeLanguage,
     MultilangText,
     any_language_to_language_data,
 )
@@ -69,19 +69,15 @@ def preproc_text(t: str) -> str:
 
 @dataclass
 class BotTokenField(FormField[str]):
-
-    async def process_message(
-        self,
-        message: tg.Message,
-        language: MaybeLanguage,
-        dynamic_data: TrustedModuliApiClientConfig,
-    ) -> MessageProcessingResult[str]:
+    async def process_message(self, context: MessageProcessingContext[str]) -> MessageProcessingResult[str]:
+        language = context.language
+        message = context.message
         assert language is not None
         lang = any_language_to_language_data(language)
         token = message.text_content.strip()
 
         async with aiohttp.ClientSession() as session:
-            api = TrustedModuliApiClient(session, config=dynamic_data)
+            api = TrustedModuliApiClient(session, config=context.dynamic_data)
             res = await api.validate_token(user=message.from_user, token=token)
 
         if res is None:
@@ -90,7 +86,8 @@ class BotTokenField(FormField[str]):
                     Language.RU.as_data(): "Проверьте валидность токена!",
                     Language.EN.as_data(): "Check token validity!",
                 }[lang],
-                parsed_value=None,
+                new_field_value=None,
+                complete_field=False,
             )
         if res.is_used:
             return MessageProcessingResult(
@@ -103,11 +100,13 @@ class BotTokenField(FormField[str]):
                         "Token has already been used to create a bot! Create a new bot or a new token for an existing one in @BotFather."
                     ),
                 }[lang],
-                parsed_value=None,
+                new_field_value=None,
+                complete_field=False,
             )
         return MessageProcessingResult(
             response_to_user=None,
-            parsed_value=token,
+            new_field_value=token,
+            complete_field=True,
         )
 
 
