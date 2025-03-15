@@ -77,9 +77,8 @@ Then you can review `htmlcov/index.html` in browser.
 #### Running linters and code checks
 
 ```bash
-black .
-isort .
-flake8
+ruff check --fix
+ruff format
 mypy
 ```
 

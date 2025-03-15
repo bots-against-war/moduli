@@ -1,17 +1,20 @@
 import abc
 import logging
 from enum import Enum
-from typing import Any, Literal, Optional, Sequence, Type, Union, cast
+from typing import Any, Literal, Optional, Sequence, Union, cast
 
 from pydantic import BaseModel, ConfigDict, model_validator
 from telebot import types as tg
 from telebot_components.feedback import FeedbackConfig as ComponentsFeedbackConfig
 from telebot_components.feedback import UserAnonymization as ComponentsUserAnonymization
 from telebot_components.form.field import (
+    DynamicOption,
     FormField,
     FormFieldResultFormattingOpts,
     PlainTextField,
-    SingleSelectField,
+)
+from telebot_components.form.field import (
+    DynamicSingleSelectFieldFull as DynamicSingleSelectField,
 )
 from telebot_components.form.form import Form as ComponentsForm
 from telebot_components.form.form import FormBranch
@@ -123,23 +126,10 @@ class SingleSelectFormFieldConfig(BaseFormFieldConfig):
     options: list[EnumOption]
     invalid_enum_error_msg: LocalizableText
 
-    def construct_field(self) -> SingleSelectField:
-        # HACK: we need to programmatically create Enum class from a user-provided set of options
-        # see https://docs.python.org/3/howto/enum.html#functional-api
-        # but also, we need to inject this class into global scope so that (de)serializers can find this class
-        # in the present module so we do this using globals()
-
-        # the form validates during construction that
-        # a) all field ids are unique within one form
-        # b) all single-select field ids are uniquely attributed to a particular form
-        #    = no interference between forms/users
-        enum_def = [(o.id, o.label) for o in self.options]
-        enum_class_name = f"{self.id}_single_select_field_options"
-        EnumClass: Type[Enum] = Enum(enum_class_name, enum_def, module=__name__)  # type: ignore
-        globals()[enum_class_name] = EnumClass
-        return SingleSelectField(
-            EnumClass=EnumClass,
+    def construct_field(self) -> DynamicSingleSelectField:
+        return DynamicSingleSelectField(
             invalid_enum_value_error_msg=self.invalid_enum_error_msg,
+            default_options=[DynamicOption(id=opt.id, label=opt.label) for opt in self.options],
             **self.base_field_kwargs(),  # type: ignore
         )
 

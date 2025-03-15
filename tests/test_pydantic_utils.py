@@ -68,4 +68,4 @@ def test_language_type_invalid(code: str) -> None:
         pydantic.ValidationError,
         match="1 validation error for LanguageContainer\nlang\n  Value error",
     ):
-        container = LanguageContainer(**{"lang": code})  # type: ignore
+        _container = LanguageContainer(**{"lang": code})  # type: ignore

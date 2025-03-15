@@ -819,9 +819,9 @@ class ModuliApp:
                 content_type="text/csv",
                 headers={
                     hdrs.CONTENT_DISPOSITION: (
-                        f"attachment; filename=\"Results for {form_info.title or 'Unnamed form'} "
+                        f'attachment; filename="Results for {form_info.title or "Unnamed form"} '
                         + f"({filter.describe()}; generated on "
-                        + f'{datetime.datetime.now().isoformat(timespec='minutes')}).csv"'
+                        + f'{datetime.datetime.now().isoformat(timespec="minutes")}).csv"'
                     ),
                 },
             )
