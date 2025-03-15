@@ -2109,13 +2109,13 @@ files = [
 
 [[package]]
 name = "telebot-against-war"
-version = "0.7.5"
+version = "0.7.10"
 description = "Async-first fork of pyTelegramBotApi"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "telebot_against_war-0.7.5-py3-none-any.whl", hash = "sha256:999325ea85e49ce1b4959cbb8251df3a5eef7ffab2686f8b13c746fb9623dcca"},
-    {file = "telebot_against_war-0.7.5.tar.gz", hash = "sha256:b15a226fcb51970f2cfe57d006b604bf1d20bc8d8c6cd1cb8b764872006ba4e3"},
+    {file = "telebot_against_war-0.7.10-py3-none-any.whl", hash = "sha256:ffd1c142d2bf4ff919e8019edda21dd777a47a6c5a01babcbf3dfff946916327"},
+    {file = "telebot_against_war-0.7.10.tar.gz", hash = "sha256:fbe32e357903845e26d69ee7d43dfed3e27d4a06417f47acf3a75b98a00aa44a"},
 ]
 
 [package.dependencies]
@@ -2125,13 +2125,13 @@ ujson = ">=5.3.0,<6.0.0"
 
 [[package]]
 name = "telebot-components"
-version = "0.12.13"
+version = "0.13.3"
 description = "Framework/toolkit for building Telegram bots with telebot and redis"
 optional = false
 python-versions = "<4.0,>=3.10"
 files = [
-    {file = "telebot_components-0.12.13-py3-none-any.whl", hash = "sha256:f0fa4593382a924f67a3ecf6df4652f3b55625e48018a9a82daa96721f0f059d"},
-    {file = "telebot_components-0.12.13.tar.gz", hash = "sha256:ff3cb9a1abe1255a7672a5388f1a77eefe9505887f746d7ccdad22aca4b9a80c"},
+    {file = "telebot_components-0.13.3-py3-none-any.whl", hash = "sha256:1561435979b8e89ca250689f19f362761e088ae28e58ed5a58f91c0503fc3287"},
+    {file = "telebot_components-0.13.3.tar.gz", hash = "sha256:2c8b79469191d8b854a6519e36d8ab8c8823fb405f320ca1d644d9afad1a70de"},
 ]
 
 [package.dependencies]
@@ -2148,7 +2148,7 @@ pyairtable = ">=1.5.0,<2.0.0"
 pytest-mock = ">=3.7.0,<4.0.0"
 redis = ">=5.0.1,<6.0.0"
 "ruamel.yaml" = ">=0.17.21,<0.18.0"
-telebot-against-war = ">=0.7.0,<0.8.0"
+telebot-against-war = ">=0.7.9,<0.8.0"
 tenacity = ">=8.1.0,<9.0.0"
 toml = ">=0.10.2,<0.11.0"
 urllib3 = ">=1.26.18,<2.0.0"
@@ -2581,4 +2581,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "32425be3edf7c407a1c38e76fabe4545f1b5dc8eaedcd9b45cae4c5647afb038"
+content-hash = "63c0975f576030d2e48dcc45a490c6f1451e680a6a03efdade1fb0d1e7a2f967"
