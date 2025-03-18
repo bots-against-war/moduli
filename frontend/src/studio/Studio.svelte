@@ -69,8 +69,6 @@
   let ufConfig = botConfig.user_flow_config;
   let savedUfConfig = clone(ufConfig);
   const oldWorkingCopyUfConfigJson = localStorage.getItem(workingCopyLSKey);
-  // node positions are stored separately = moving blocks does not trigger reactivity, edit history, etc
-  let nodeDisplayCoords = ufConfig.node_display_coords;
 
   // region: reactive logic
 
@@ -154,7 +152,7 @@
     console.debug("Undoing the last change...");
     editHistory.pop(); // removing the last version from the edit history
     const undoneUfConfig = editHistory[editHistory.length - 1];
-    undoneUfConfig.node_display_coords = filterNodeDisplayCoords(nodeDisplayCoords, undoneUfConfig); // adding up-to-date node coords
+    undoneUfConfig.node_display_coords = filterNodeDisplayCoords(ufConfig.node_display_coords, undoneUfConfig);
     ufConfig = clone(undoneUfConfig);
     forceRerender();
   }
@@ -213,7 +211,7 @@
       tentativeNode = null;
       return true;
     }
-    nodeDisplayCoords[tentativeNode.id] = {
+    ufConfig.node_display_coords[tentativeNode.id] = {
       x: cursor.x - 125, // half-width of the node in svelvet's coords
       y: cursor.y - 50, // just some arbitrary offset
     };
@@ -276,11 +274,7 @@
     if (!configValidationResult.ok) return;
 
     isSavingBotConfig = true;
-    // returning node display coords from separate storage to config
-    ufConfig.node_display_coords = filterNodeDisplayCoords(
-      { ...ufConfig.node_display_coords, ...nodeDisplayCoords },
-      ufConfig,
-    );
+    ufConfig.node_display_coords = filterNodeDisplayCoords(ufConfig.node_display_coords, ufConfig);
     const newBotConfig: BotConfig = {
       token_secret_name: botConfig.token_secret_name,
       user_flow_config: ufConfig,
@@ -308,11 +302,7 @@
   );
 
   const openReadmeModal = () =>
-    open(
-      ReadmeModal,
-      { onShowcaseTemplate: () => applyTempalateToConfig(basicShowcaseTemplate()) },
-      INFO_MODAL_OPTIONS,
-    );
+    open(ReadmeModal, { onShowcaseTemplate: () => applyTemplateToConfig(basicShowcaseTemplate()) }, INFO_MODAL_OPTIONS);
   if (localStorage.getItem(README_SHOWN_LS_KEY) === null) {
     localStorage.setItem(README_SHOWN_LS_KEY, "yea");
     openReadmeModal();
@@ -335,17 +325,13 @@
     }
   }
 
-  const applyTempalateToConfig = (template: Template) => {
+  const applyTemplateToConfig = (template: Template) => {
     if (isMultilang && template.config.blocks.find((b) => b.language_select)) {
       alert($t("studio.errors.failed_to_add_template_langselect"));
       return;
     }
     console.debug("Applying template:", template);
-    // since we're storing node display coords separately, we need to patch
-    // them back into the config here
-    ufConfig.node_display_coords = nodeDisplayCoords;
     ufConfig = applyTemplate(ufConfig, template);
-    nodeDisplayCoords = ufConfig.node_display_coords;
     isModified = true;
     forceRerender();
   };
@@ -414,13 +400,13 @@
       {customMouseDownHandler}
       customCssCursor={tentativeNode ? "crosshair" : null}
     >
-      <BotInfoNode {botId} bind:position={nodeDisplayCoords[BOT_INFO_NODE_ID]} />
+      <BotInfoNode {botId} bind:position={ufConfig.node_display_coords[BOT_INFO_NODE_ID]} />
       {#each ufConfig.entrypoints as entrypoint (getEntrypointId(entrypoint))}
         {#if entrypoint.command}
           <CommandEntryPointNode
             on:delete={deleteNode}
             bind:config={entrypoint.command}
-            bind:position={nodeDisplayCoords[entrypoint.command.entrypoint_id]}
+            bind:position={ufConfig.node_display_coords[entrypoint.command.entrypoint_id]}
             bind:isValid={isNodeValid[entrypoint.command.entrypoint_id]}
           />
         {/if}
@@ -432,7 +418,7 @@
             on:delete={deleteNode}
             on:clone={cloneNode}
             bind:config={block.content}
-            bind:position={nodeDisplayCoords[block.content.block_id]}
+            bind:position={ufConfig.node_display_coords[block.content.block_id]}
             bind:isValid={isNodeValid[block.content.block_id]}
           />
         {:else if block.human_operator}
@@ -441,7 +427,7 @@
             on:delete={deleteNode}
             on:clone={cloneNode}
             bind:config={block.human_operator}
-            bind:position={nodeDisplayCoords[block.human_operator.block_id]}
+            bind:position={ufConfig.node_display_coords[block.human_operator.block_id]}
             bind:isValid={isNodeValid[block.human_operator.block_id]}
           />
         {:else if block.language_select}
@@ -451,7 +437,7 @@
               languageConfigStore.set(null);
             }}
             bind:config={block.language_select}
-            bind:position={nodeDisplayCoords[block.language_select.block_id]}
+            bind:position={ufConfig.node_display_coords[block.language_select.block_id]}
             bind:isValid={isNodeValid[block.language_select.block_id]}
           />
         {:else if block.menu}
@@ -459,7 +445,7 @@
             on:delete={deleteNode}
             on:clone={cloneNode}
             bind:config={block.menu}
-            bind:position={nodeDisplayCoords[block.menu.block_id]}
+            bind:position={ufConfig.node_display_coords[block.menu.block_id]}
             bind:isValid={isNodeValid[block.menu.block_id]}
           />
         {:else if block.form}
@@ -468,7 +454,7 @@
             on:delete={deleteNode}
             on:clone={cloneNode}
             bind:config={block.form}
-            bind:position={nodeDisplayCoords[block.form.block_id]}
+            bind:position={ufConfig.node_display_coords[block.form.block_id]}
             bind:isValid={isNodeValid[block.form.block_id]}
           />
         {/if}
@@ -511,7 +497,7 @@
             open(
               TemplatesModal,
               {
-                templateSelectedCallback: applyTempalateToConfig,
+                templateSelectedCallback: applyTemplateToConfig,
               },
               INFO_MODAL_OPTIONS,
             )}
