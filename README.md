@@ -11,7 +11,7 @@ Developed by [bots against war](https://t.me/bots_against_war_bot) team.
 
 ### Basic dev setup
 
-1. [Install](https://python-poetry.org/docs/) Poetry (tested with versions 1.5 - 1.7). Then, install
+1. [Install](https://python-poetry.org/docs/) Poetry (tested with versions 1.5 - 1.8.5, not working on 2+). Then, install
    backend dependencies with
 
 ```bash
@@ -38,6 +38,7 @@ pip install -r requirements.txt
 # set environment variables (example for unix-like systems)
 export TELEBOT_CONSTRUCTOR_USE_REDIS_EMULATION=1
 export SECRETS_ENCRYPTION_KEY=if-wLoSw7gEbQgY1xLHrEgI4E357PRUAeGfZudnaYu0=  # dummy value
+export OWNER_CHAT_ID=<your `from.id` that you can get in @bots_against_war_service_bot telegram bot>
 
 # run the web app
 python run_polling.py
