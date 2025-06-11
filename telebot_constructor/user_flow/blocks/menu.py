@@ -1,15 +1,17 @@
+import datetime
 from typing import Any, Optional
 
 from pydantic import BaseModel
-from telebot_components.menu.menu import Menu as ComponentsMenu
-from telebot_components.menu.menu import MenuConfig as ComponentsMenuConfig
+from telebot import types as tg
+from telebot.api import ApiHTTPException
+from telebot.callback_data import CallbackData
+from telebot_components.language import MaybeLanguage, any_text_to_str
 from telebot_components.menu.menu import (
-    MenuHandler,
     MenuMechanism,
     TerminatorContext,
     TerminatorResult,
 )
-from telebot_components.menu.menu import MenuItem as ComponentsMenuItem
+from telebot_components.stores.generic import KeyValueStore
 from telebot_components.utils import TextMarkup
 
 from telebot_constructor.user_flow.blocks.base import UserFlowBlock
@@ -21,36 +23,47 @@ from telebot_constructor.user_flow.types import (
 from telebot_constructor.utils import preprocess_for_telegram, without_nones
 from telebot_constructor.utils.pydantic import LocalizableText
 
-NOOP_TERMINATOR = "noop"
+ROUTE_CALLBACK_DATA = CallbackData("id", prefix="route")
+NOOP_CALLBACK_DATA = CallbackData(prefix="noop")
 
 
 class MenuItem(BaseModel):
     label: LocalizableText
 
     # at most one field must be non-None; if all are None, the item is a noop button
-    submenu: Optional["Menu"] = None
     next_block_id: Optional[str] = None  # for terminal items
     link_url: Optional[str] = None  # for link buttons (works only if mechanism is inline)
 
     def model_post_init(self, __context: Any) -> None:
-        specified_options = [o for o in (self.submenu, self.next_block_id, self.link_url) if o is not None]
+        specified_options = [o for o in (self.next_block_id, self.link_url) if o is not None]
         if len(specified_options) > 1:
             raise ValueError("At most one of the options may be specified: submenu, next block, or link URL")
         self._is_noop = len(specified_options) == 0
 
-    def to_components_menu_item(self) -> ComponentsMenuItem:
-        return ComponentsMenuItem(
-            label=self.label,
-            submenu=None if self.submenu is None else self.submenu.to_components_menu(),
-            terminator=NOOP_TERMINATOR if self._is_noop else self.next_block_id,
-            link_url=self.link_url,
-            bound_category=None,
-        )
+    def get_inline_button(self, language: MaybeLanguage):
+        if self.link_url is not None:
+            return tg.InlineKeyboardButton(
+                text=any_text_to_str(self.label, language),
+                url=self.link_url,
+            )
+        elif self.next_block_id is not None:
+            return tg.InlineKeyboardButton(
+                text=any_text_to_str(self.label, language),
+                callback_data=ROUTE_CALLBACK_DATA.new(self.next_block_id),  # type: ignore
+            )
+        else:
+            return tg.InlineKeyboardButton(
+                text=any_text_to_str(self.label, language),
+                callback_data=NOOP_CALLBACK_DATA.new(),  # type: ignore
+            )
+
+    def get_keyboard_button(self, language: MaybeLanguage) -> tg.KeyboardButton:
+        return tg.KeyboardButton(text=any_text_to_str(self.label, language))
 
 
 class MenuConfig(BaseModel):
     mechanism: MenuMechanism
-    back_label: Optional[LocalizableText]
+    back_label: LocalizableText | None
     lock_after_termination: bool
 
 
@@ -60,54 +73,76 @@ class Menu(BaseModel):
     config: MenuConfig
     markup: TextMarkup = TextMarkup.NONE
 
-    def to_components_menu(self) -> ComponentsMenu:
-        config = ComponentsMenuConfig(
-            back_label=self.config.back_label,
-            lock_after_termination=self.config.lock_after_termination,
-            mechanism=self.config.mechanism,
-            text_markup=self.markup,
-        )
-        return ComponentsMenu(
-            text=preprocess_for_telegram(self.text, self.markup),
-            menu_items=[item.to_components_menu_item() for item in self.items],
-            config=config,
-        )
+    def model_post_init(self, __conext: Any) -> None:
+        self.text_preprocessed = preprocess_for_telegram(self.text, self.markup)
 
 
 class MenuBlock(UserFlowBlock):
-    """Multilevel menu block powered by Telegram inline buttons"""
-
     menu: Menu
 
     def possible_next_block_ids(self) -> list[str]:
         return without_nones([item.next_block_id for item in self.menu.items])
 
-    def model_post_init(self, __context: Any) -> None:
-        self.validate_menu()
-
-    def validate_menu(self) -> None:
-        self.menu.to_components_menu()  # telebot_components' menu performs validation on instantiation
-
     @property
-    def menu_handler(self) -> MenuHandler:
-        if self._components_menu_handler is None:
-            raise RuntimeError("self.menu_handler called before setup method")
-        return self._components_menu_handler
+    def displayed_items(self) -> list[MenuItem]:
+        items = self.menu.items.copy()
+        if self.menu.config.back_label is not None:
+            # FIXME: add "back button" support
+            # items.append(MenuItem(label=self.menu.config.back_label, submenu=self.parent_menu))
+            pass
+        return items
 
     async def enter(self, context: UserFlowContext) -> None:
-        await self.menu_handler.start_menu(bot=context.bot, user=context.user)
+        user = context.user
+        language = None if self._language_store is None else await self._language_store.get_user_language(context.user)
+        updateable_menu_message_id = await self._updateable_menu_message_id_store.load(user.id)
+
+        if self.menu.config.mechanism.is_inline_kbd():
+            reply_markup: tg.ReplyMarkup = tg.InlineKeyboardMarkup(
+                keyboard=[[menu_item.get_inline_button(language)] for menu_item in self.displayed_items]
+            )
+        else:
+            reply_markup = tg.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            # HACK: telebot annotates keyboard as list[list[KeyboardButton]], but actually expectes JSONified versions
+            # of the button objects
+            reply_markup.keyboard = [[item.get_keyboard_button(language).to_dict()] for item in self.displayed_items]  # type: ignore
+
+        if updateable_menu_message_id is not None and self.menu.config.mechanism.is_updateable():
+            try:
+                await context.bot.edit_message_text(
+                    chat_id=user.id,
+                    text=any_text_to_str(self.menu.text_preprocessed, language),
+                    parse_mode=self.menu.markup.parse_mode(),
+                    message_id=updateable_menu_message_id,
+                    reply_markup=reply_markup,
+                )
+                return
+            except ApiHTTPException as e:
+                self._logger.info(f"Error editing message text and reply markup, will send a new message: {e!r}")
+
+        new_menu_message = await context.bot.send_message(
+            chat_id=user.id,
+            text=any_text_to_str(self.menu.text_preprocessed, language),
+            parse_mode=self.menu.markup.parse_mode(),
+            reply_markup=reply_markup,
+        )
+        if self.menu.config.mechanism.is_updateable():
+            await self._updateable_menu_message_id_store.save(user.id, new_menu_message.id)
 
     async def setup(self, context: UserFlowSetupContext) -> SetupResult:
-        self._components_menu = self.menu.to_components_menu()
-        self._components_menu_handler = MenuHandler(
-            name=self.block_id,
-            bot_prefix=context.bot_prefix,
-            menu_tree=self._components_menu,
+        self._logger = context.make_instrumented_logger(__name__, block_id=self.block_id)
+        self._language_store = context.language_store
+
+        self._updateable_menu_message_id_store: KeyValueStore[int] = KeyValueStore[int](
+            name="last-menu-msg",
+            prefix=context.bot_prefix,
             redis=context.redis,
-            category_store=None,
-            language_store=context.language_store,
+            expiration_time=datetime.timedelta(days=180),
+            dumper=str,
+            loader=int,
         )
-        context.errors_store.instrument(self._components_menu_handler.logger)
+
+        # context.errors_store.instrument(self._components_menu_handler.logger)
 
         async def on_terminal_menu_option_selected(terminator_context: TerminatorContext) -> Optional[TerminatorResult]:
             terminator = terminator_context.terminator
@@ -128,8 +163,4 @@ class MenuBlock(UserFlowBlock):
                 )
             return None
 
-        self.menu_handler.setup(
-            bot=context.bot,
-            on_terminal_menu_option_selected=on_terminal_menu_option_selected,
-        )
         return SetupResult.empty()

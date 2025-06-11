@@ -33,8 +33,9 @@ class UserFlowSetupContext:
     media_store: UserSpecificMediaStore | None
     owner_chat_id: int  # Telegram chat somehow associated with the bot owner
 
-    def make_instrumented_logger(self, module_name: str) -> logging.Logger:
-        logger = logging.getLogger(module_name + f"[{self.bot_prefix}]")
+    def make_instrumented_logger(self, module_name: str, block_id: str) -> logging.Logger:
+        logger_name = module_name + f"[{self.bot_prefix}][{block_id}]"
+        logger = logging.getLogger(logger_name)
         self.errors_store.instrument(logger)
         return logger
 
@@ -49,7 +50,7 @@ class UserFlowContext:
     user: tg.User
     last_update_content: Optional[service_types.UpdateContent]
 
-    visited_block_ids: set[str] = dataclasses.field(default_factory=set)
+    visited_block_ids: set[str] = dataclasses.field(default_factory=set[str])
 
     @classmethod
     def from_setup_context(

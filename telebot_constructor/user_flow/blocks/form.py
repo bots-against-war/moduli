@@ -1,5 +1,4 @@
 import abc
-import logging
 from enum import Enum
 from typing import Any, Literal, Optional, Sequence, Union, cast
 
@@ -298,8 +297,6 @@ class FormBlock(UserFlowBlock):
         return without_nones([self.form_cancelled_next_block_id, self.form_completed_next_block_id])
 
     def model_post_init(self, __context: Any) -> None:
-        self._logger = logging.getLogger(__name__)
-
         form_id_error_prefix = f"Form block {self.block_id!r} error: "
 
         if not self.members:
