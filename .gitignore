@@ -262,3 +262,5 @@ temp.py
 landing/build-kit
 landing/build
 !landing/src/lib
+debug*.py
+memray*

@@ -21,6 +21,7 @@ mypy = "^1.4.1"
 setuptools = "^73.0.1"
 yarb-against-war = "1.0.2"
 ruff = "^0.11.0"
+memray = "^1.17.2"
 
 [tool.poetry-dynamic-versioning]
 enable = true
