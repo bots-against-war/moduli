@@ -130,7 +130,7 @@ class MenuBlock(UserFlowBlock):
             await self._updateable_menu_message_id_store.save(user.id, new_menu_message.id)
 
     async def setup(self, context: UserFlowSetupContext) -> SetupResult:
-        self._logger = context.make_instrumented_logger(__name__, block_id=self.block_id)
+        self._logger = context.make_instrumented_logger(__name__, self.block_id)
         self._language_store = context.language_store
 
         self._updateable_menu_message_id_store: KeyValueStore[int] = KeyValueStore[int](
@@ -141,8 +141,6 @@ class MenuBlock(UserFlowBlock):
             dumper=str,
             loader=int,
         )
-
-        # context.errors_store.instrument(self._components_menu_handler.logger)
 
         async def on_terminal_menu_option_selected(terminator_context: TerminatorContext) -> Optional[TerminatorResult]:
             terminator = terminator_context.terminator
