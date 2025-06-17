@@ -31,11 +31,10 @@ style = "semver"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-telebot-components = "^0.13.3"
+telebot-components = "0.14.4"
 pydantic = "^2.8.2"
 aiohttp-swagger = "^1.0.16"
 telebot-against-war = "^0.7.4"
-markdownify = "^0.11.6"
 cryptography = "^44.0.1"
 cachetools = "^5.3.1"
 urllib3 = "^1.26.18"

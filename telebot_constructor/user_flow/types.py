@@ -15,6 +15,7 @@ from telebot_components.stores.language import LanguageStore
 from telebot_constructor.store.errors import BotSpecificErrorsStore
 from telebot_constructor.store.form_results import BotSpecificFormResultsStore
 from telebot_constructor.store.media import UserSpecificMediaStore
+from telebot_constructor.store.menu import MenuMetadataStore
 from telebot_constructor.utils import AnyChatId
 
 
@@ -31,6 +32,7 @@ class UserFlowSetupContext:
     enter_block: "EnterUserFlowBlockCallback"
     get_active_block_id: "GetActiveUserFlowBlockId"
     media_store: UserSpecificMediaStore | None
+    menu_metadata_store: MenuMetadataStore
     owner_chat_id: int  # Telegram chat somehow associated with the bot owner
 
     def make_instrumented_logger(self, module_name: str, block_id: str) -> logging.Logger:

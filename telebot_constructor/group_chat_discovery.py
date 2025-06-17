@@ -66,13 +66,17 @@ class GroupChatDiscoveryHandler:
 
     async def get_group_chat(self, bot: AsyncTeleBot, chat_id: AnyChatId) -> Optional[TgGroupChat]:
         prefix = f"{bot.log_marker} (getting info for chat {chat_id}) "
+        raw_chat: tg.Chat | None = None
         try:
             async for attempt in rate_limit_retry():
                 with attempt:
                     raw_chat = await bot.get_chat(chat_id)
         except tg_api.ApiException:
             logger.info(prefix + "Error, assuming chat does not exist / is not available to bot", exc_info=True)
+
+        if raw_chat is None:
             return None
+
         photo_b64: Optional[str] = None
         if raw_chat.photo is not None:
             photo_b64 = await self.telegram_files_downloader.get_base64_file(

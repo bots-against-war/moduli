@@ -132,7 +132,8 @@ class AwsS3MediaStore(MediaStore):
         await self._client.__aenter__()
 
     async def cleanup(self):
-        await self._client.__aexit__(None, None, None)
+        if self._client is not None:
+            await self._client.__aexit__(None, None, None)
         self._client = None
 
     async def save_media(self, owner_id: str, media: Media) -> MediaId | None:
@@ -148,7 +149,7 @@ class AwsS3MediaStore(MediaStore):
             put_object_kwargs["Metadata"] = {"filename": media.filename}
 
         try:
-            resp = await self.client.put_object(
+            resp = await self.client.put_object(  # type: ignore
                 Bucket=self.credentials.bucket,
                 Key=f"{owner_id}/{media_id}",
                 Body=media.content,
@@ -163,7 +164,7 @@ class AwsS3MediaStore(MediaStore):
     async def load_media(self, owner_id: str, media_id: MediaId) -> Media | None:
         try:
             # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/get_object.html
-            resp = await self.client.get_object(
+            resp = await self.client.get_object(  # type: ignore
                 Bucket=self.credentials.bucket,
                 Key=f"{owner_id}/{media_id}",
             )
@@ -177,7 +178,7 @@ class AwsS3MediaStore(MediaStore):
     async def delete_media(self, owner_id: str, media_id: MediaId) -> bool:
         try:
             # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/delete_object.html
-            await self.client.delete_object(
+            await self.client.delete_object(  # type: ignore
                 Bucket=self.credentials.bucket,
                 Key=f"{owner_id}/{media_id}",
             )

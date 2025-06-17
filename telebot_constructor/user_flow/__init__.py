@@ -13,6 +13,7 @@ from telebot_components.stores.generic import KeyValueStore
 from telebot_constructor.store.errors import BotSpecificErrorsStore
 from telebot_constructor.store.form_results import BotSpecificFormResultsStore
 from telebot_constructor.store.media import UserSpecificMediaStore
+from telebot_constructor.store.menu import MenuMetadataStore
 from telebot_constructor.user_flow.blocks.base import UserFlowBlock
 from telebot_constructor.user_flow.blocks.form import FormBlock
 from telebot_constructor.user_flow.blocks.human_operator import HumanOperatorBlock
@@ -137,6 +138,7 @@ class UserFlow:
             errors_store=errors_store,
             banned_users_store=banned_users_store,
             media_store=media_store,
+            menu_metadata_store=MenuMetadataStore(redis, bot_prefix),
             feedback_handlers=dict(),
             language_store=None,  # set later, when landuage select blocks are set up
             enter_block=self._enter_block,
