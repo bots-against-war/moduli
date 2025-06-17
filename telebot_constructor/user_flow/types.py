@@ -1,7 +1,7 @@
 import dataclasses
 import logging
 from dataclasses import dataclass
-from typing import Awaitable, Callable, Coroutine, Optional
+from typing import Awaitable, Callable, Coroutine
 
 from telebot import AsyncTeleBot
 from telebot import types as tg
@@ -26,7 +26,7 @@ class UserFlowSetupContext:
     banned_users_store: BannedUsersStore
     form_results_store: BotSpecificFormResultsStore
     errors_store: BotSpecificErrorsStore
-    language_store: Optional[LanguageStore]
+    language_store: LanguageStore | None
     feedback_handlers: dict[AnyChatId | None, FeedbackHandler]
     enter_block: "EnterUserFlowBlockCallback"
     get_active_block_id: "GetActiveUserFlowBlockId"
@@ -46,9 +46,10 @@ class UserFlowContext:
     banned_users_store: BannedUsersStore
     enter_block: "EnterUserFlowBlockCallback"
     get_active_block_id: "GetActiveUserFlowBlockId"
-    chat: Optional[tg.Chat]
+    chat: tg.Chat | None
     user: tg.User
-    last_update_content: Optional[service_types.UpdateContent]
+    last_update_content: service_types.UpdateContent | None
+    updateable_message_id: int | None
 
     visited_block_ids: set[str] = dataclasses.field(default_factory=set[str])
 
@@ -56,9 +57,10 @@ class UserFlowContext:
     def from_setup_context(
         cls,
         setup_ctx: UserFlowSetupContext,
-        chat: Optional[tg.Chat],
+        chat: tg.Chat | None,
         user: tg.User,
-        last_update_content: Optional[service_types.UpdateContent],
+        last_update_content: service_types.UpdateContent | None,
+        updateable_message_id: int | None = None,
     ) -> "UserFlowContext":
         return UserFlowContext(
             bot=setup_ctx.bot,
@@ -68,13 +70,14 @@ class UserFlowContext:
             chat=chat,
             user=user,
             last_update_content=last_update_content,
+            updateable_message_id=updateable_message_id,
         )
 
 
 UserFlowBlockId = str
 
 EnterUserFlowBlockCallback = Callable[[UserFlowBlockId, UserFlowContext], Awaitable[None]]
-GetActiveUserFlowBlockId = Callable[[int], Awaitable[Optional[UserFlowBlockId]]]
+GetActiveUserFlowBlockId = Callable[[int], Awaitable[UserFlowBlockId | None]]
 
 
 @dataclass(frozen=True)

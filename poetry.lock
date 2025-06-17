@@ -2276,13 +2276,13 @@ urllib3 = ">=1.26.18,<2.0.0"
 
 [[package]]
 name = "telegramify-markdown"
-version = "0.4.4"
+version = "0.5.1"
 description = "Makes it easy to send Markdown in Telegram MarkdownV2 style"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "telegramify_markdown-0.4.4-py3-none-any.whl", hash = "sha256:6ad4fa9ff4a50758cd230cf456ca774e6894dfb5997d73aa15ecaa95ecdae61a"},
-    {file = "telegramify_markdown-0.4.4.tar.gz", hash = "sha256:5e1d016556de1955891e988201770fceabf92c66a2db70e121fd2aa88ee4b625"},
+    {file = "telegramify_markdown-0.5.1-py3-none-any.whl", hash = "sha256:a757b9a0f0d681ba7e29638deabc8decc634626bee359d95effaa505a86b756d"},
+    {file = "telegramify_markdown-0.5.1.tar.gz", hash = "sha256:a2c4ca337219607dce13883bdc30bf4faf07bf37e3f748594e8b10e1b5708fae"},
 ]
 
 [package.dependencies]
@@ -2757,4 +2757,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "4be862809bf041f76841ad07627c71aac25bbb010859f3d7a66f6b3ba200263e"
+content-hash = "25c0c6a7bbd11d69beb8dd7dc31bd60f8516021eea1d6886dc3a8fd0a4abd1cb"
