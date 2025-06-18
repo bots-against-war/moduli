@@ -196,6 +196,7 @@ class ContentBlock(UserFlowBlock):
                         ]
                     else:
                         self._logger.error("Unexpected attachment type; only images are supported for now")
+                        messages = []
                 else:
                     # multiple attachments case
                     tg_input_media = [
@@ -238,7 +239,7 @@ class ContentBlock(UserFlowBlock):
             await context.enter_block(self.next_block_id, context)
 
     async def setup(self, context: UserFlowSetupContext) -> SetupResult:
-        self._logger = context.make_instrumented_logger(__name__)
+        self._logger = context.make_instrumented_logger(__name__, self.block_id)
         self._tg_file_id_by_media_id_store = KeyValueStore[str](
             name="file-id",
             prefix=context.bot_prefix,

@@ -1583,7 +1583,6 @@
       "type": "object"
     },
     "MenuBlock": {
-      "description": "Multilevel menu block powered by Telegram inline buttons",
       "properties": {
         "block_id": {
           "title": "Block Id",
@@ -1656,17 +1655,6 @@
             }
           ],
           "title": "Label"
-        },
-        "submenu": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/Menu"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
         },
         "next_block_id": {
           "anyOf": [

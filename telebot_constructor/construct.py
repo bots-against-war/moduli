@@ -3,6 +3,7 @@ import logging
 from typing import Callable, Coroutine, Optional, Type
 
 from telebot import AsyncTeleBot
+from telebot import types as tg
 from telebot.metrics import TelegramUpdateMetricsHandler
 from telebot.runner import AuxBotEndpoint, BotRunner
 from telebot_components.redis_utils.interface import RedisInterface
@@ -77,9 +78,11 @@ async def construct_bot(
     bot_commands: list[BotCommandInfo] = []
 
     try:
+        bot_user: tg.User | None = None
         async for attempt in rate_limit_retry():
             with attempt:
                 bot_user = await bot.get_me()
+        assert bot_user is not None
         logger.info(f"Bot user loaded: {bot_user.to_json()}")
     except Exception:
         logger.exception("Error getting bot user, probably an invalid token")

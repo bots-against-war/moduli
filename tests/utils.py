@@ -36,11 +36,12 @@ def tg_update_message_to_bot(
     group_chat_id: Optional[int] = None,
     user_kwargs: dict[str, Any] | None = None,
     metrics: Optional[TelegramUpdateMetrics] = None,
+    message_id: int = 1,
 ) -> tg.Update:
     return tg.Update(
         update_id=1,
         message=tg.Message(
-            message_id=1,
+            message_id=message_id,
             from_user=tg.User(id=user_id, is_bot=False, first_name=first_name, **(user_kwargs or {})),
             date=int(time.time()),
             chat=(
@@ -74,7 +75,12 @@ def tg_update_message_to_bot(
     )
 
 
-def tg_update_callback_query(user_id: int, first_name: str, callback_query: str) -> tg.Update:
+def tg_update_callback_query(
+    user_id: int,
+    first_name: str,
+    callback_query: str,
+    message_id: int = 1,
+) -> tg.Update:
     return tg.Update(
         update_id=1,
         message=None,
@@ -90,7 +96,7 @@ def tg_update_callback_query(user_id: int, first_name: str, callback_query: str)
             chat_instance=None,
             json_string=None,
             message=tg.Message(
-                message_id=1,
+                message_id=message_id,
                 from_user=tg.User(id=user_id, is_bot=False, first_name=first_name),
                 date=int(time.time()),
                 chat=tg.Chat(id=user_id, type="private", first_name=first_name),
