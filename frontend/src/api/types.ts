@@ -404,9 +404,6 @@ export interface MessagesToAdmin {
   can_not_delete_message: CanNotDeleteMessage;
   [k: string]: unknown;
 }
-/**
- * Multilevel menu block powered by Telegram inline buttons
- */
 export interface MenuBlock {
   block_id: BlockId2;
   menu: Menu;
@@ -421,7 +418,6 @@ export interface Menu {
 }
 export interface MenuItem {
   label: Label;
-  submenu?: Menu | null;
   next_block_id?: NextBlockId4;
   link_url?: LinkUrl;
   [k: string]: unknown;
