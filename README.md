@@ -59,7 +59,7 @@ npm install
 npm run dev
 ```
 
-1. Visit `http://localhost:8081` in the browser.
+5. Visit `http://localhost:8081` in the browser.
 
 ### Generate TS interfaces from backend data model
 
