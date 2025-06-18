@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel
 from telebot import types as tg
@@ -29,16 +29,16 @@ class MenuItem(BaseModel):
     label: LocalizableText
 
     # at most one field must be non-None; if all are None, the item is a noop button
-    next_block_id: Optional[str] = None
-    link_url: Optional[str] = None  # for link buttons (TODO: validate that is used with inline only)
+    next_block_id: str | None = None
+    link_url: str | None = None  # for link buttons (TODO: validate that is used with inline only)
 
     def model_post_init(self, __context: Any) -> None:
         specified_options = [o for o in (self.next_block_id, self.link_url) if o is not None]
         if len(specified_options) > 1:
-            raise ValueError("At most one of the options may be specified: submenu, next block, or link URL")
+            raise ValueError("At most one of the options may be specified: next block or link URL")
         self._is_noop = len(specified_options) == 0
 
-        # NOTE: for reply keyboards we must strip button captions for later text matching
+        # especially for reply keyboards we must strip button captions for later text matching
         if isinstance(self.label, str):
             self.label = self.label.strip()
         else:
@@ -70,11 +70,11 @@ class MenuBlock(UserFlowBlock):
     def _history_session_id(self, user_id: int, updateable_message_id: int | None) -> str | None:
         if self.menu.config.mechanism.is_updateable():
             if updateable_message_id is not None:
-                return f"{user_id}-{updateable_message_id}"
+                return f"u{user_id}-m{updateable_message_id}"
             else:
                 return None
         else:
-            return str(user_id)
+            return f"u{user_id}"
 
     async def enter(self, context: UserFlowContext) -> None:
         user = context.user
@@ -168,7 +168,7 @@ class MenuBlock(UserFlowBlock):
                     self.block_id,
                 )
 
-    async def get_previous_block_id(self, history_id: str) -> str | None:
+    async def get_back_destination(self, history_id: str) -> str | None:
         # NOTE: to understand why 2 pops are needed, consider two-level menu A->B
         # - user enters A, "A" is pushed into history
         # - user enters B, "B" is pushed into history, which is not ["A", "B"]
@@ -193,14 +193,13 @@ class MenuBlock(UserFlowBlock):
                 # the button was created by a different menu block and should be handled from there
                 return tgservice.HandlerResult(continue_to_other_handlers=True)
 
-            # TODO: lock inline buttons?
             if action.route_to_block_id is not None:
                 next_block_id = action.route_to_block_id
             else:
                 history_id = self._history_session_id(call.from_user.id, call.message.id)
                 if history_id is None:
                     return None
-                maybe_next_block_id = await self.get_previous_block_id(history_id)
+                maybe_next_block_id = await self.get_back_destination(history_id)
                 if maybe_next_block_id is None:
                     return None
                 else:
@@ -253,7 +252,7 @@ class MenuBlock(UserFlowBlock):
                 if any(t == message.text for t in back_texts):
                     history_id = self._history_session_id(message.from_user.id, None)
                     if history_id is not None:
-                        maybe_next_block_id = await self.get_previous_block_id(history_id)
+                        maybe_next_block_id = await self.get_back_destination(history_id)
                         if maybe_next_block_id is not None:
                             await context.enter_block(maybe_next_block_id, next_block_ctx)
 
