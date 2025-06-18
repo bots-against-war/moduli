@@ -7,6 +7,7 @@ from telebot import AsyncTeleBot
 from telebot import types as tg
 from telebot.runner import AuxBotEndpoint
 from telebot.types import service as service_types
+from telebot.types import service as tgservice
 from telebot_components.feedback import FeedbackHandler
 from telebot_components.redis_utils.interface import RedisInterface
 from telebot_components.stores.banned_users import BannedUsersStore
@@ -40,6 +41,13 @@ class UserFlowSetupContext:
         logger = logging.getLogger(logger_name)
         self.errors_store.instrument(logger)
         return logger
+
+    def active_block_filter(self, block_id: str) -> tgservice.FilterFunc[tg.Message]:
+        async def filter_(update_content: tg.Message) -> bool:
+            current_block_id = await self.get_active_block_id(update_content.from_user.id)
+            return current_block_id == block_id
+
+        return filter_
 
 
 @dataclass(frozen=True)

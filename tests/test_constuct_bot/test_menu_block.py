@@ -352,7 +352,9 @@ async def test_flow_with_multilevel_menu() -> None:
     bot.method_calls.clear()
 
 
-def make_menu_blocks(connections: dict[str, list[str]]) -> list[MenuBlock]:
+def make_menu_blocks(
+    connections: dict[str, list[str]], mechanism: MenuMechanism = MenuMechanism.INLINE_BUTTONS
+) -> list[MenuBlock]:
     return [
         MenuBlock(
             block_id=f"menu-{menu_name}",
@@ -368,7 +370,7 @@ def make_menu_blocks(connections: dict[str, list[str]]) -> list[MenuBlock]:
                 config=MenuConfig(
                     back_label="<-",
                     lock_after_termination=False,
-                    mechanism=MenuMechanism.INLINE_BUTTONS,
+                    mechanism=mechanism,
                 ),
             ),
         )
@@ -880,6 +882,142 @@ async def test_dag_menu() -> None:
                     "inline_keyboard": [
                         [{"text": "C", "callback_data": "action:ae64272b007932d17220d5e5d9870452"}],
                     ]
+                },
+            },
+        ],
+    )
+    bot.method_calls.clear()
+
+
+async def test_multilevel_menu_reply_kbd() -> None:
+    USER_ID = 1312
+
+    menu_a, menu_b, menu_c = make_menu_blocks(
+        {"A": ["B"], "B": ["C"], "C": []},
+        mechanism=MenuMechanism.REPLY_KEYBOARD,
+    )
+    menu_c.menu.items.append(MenuItem(label="finish", next_block_id="fin-message"))
+    bot_config = BotConfig(
+        token_secret_name="token",
+        display_name="Menu bot",
+        user_flow_config=UserFlowConfig(
+            entrypoints=[
+                UserFlowEntryPointConfig(
+                    command=CommandEntryPoint(entrypoint_id="start-cmd", command="start", next_block_id="menu-A"),
+                )
+            ],
+            blocks=[
+                UserFlowBlockConfig(menu=menu_a),
+                UserFlowBlockConfig(menu=menu_b),
+                UserFlowBlockConfig(menu=menu_c),
+                UserFlowBlockConfig(
+                    content=ContentBlock.simple_text(block_id="fin-message", message_text="finish", next_block_id=None),
+                ),
+            ],
+            node_display_coords={},
+        ),
+    )
+
+    redis = RedisEmulation()
+    secret_store = dummy_secret_store(redis)
+    username = "username"
+    await secret_store.save_secret(secret_name="token", secret_value="mock-token", owner_id=username)
+    bot_runner = await construct_bot(
+        owner_id=username,
+        bot_id="menu-bot",
+        bot_config=bot_config,
+        form_results_store=dummy_form_results_store(),
+        errors_store=dummy_errors_store(),
+        secret_store=secret_store,
+        redis=redis,
+        owner_chat_id=0,
+        _bot_factory=MockedAsyncTeleBot,
+    )
+
+    assert not bot_runner.background_jobs
+    assert not bot_runner.aux_endpoints
+
+    bot = bot_runner.bot
+    assert isinstance(bot, MockedAsyncTeleBot)
+    bot.method_calls.clear()
+
+    # /start command
+    await bot.process_new_updates([tg_update_message_to_bot(USER_ID, first_name="User", text="/start")])
+    assert_method_call_dictified_kwargs_include(
+        bot.method_calls["send_message"],
+        [
+            {
+                "chat_id": 1312,
+                "text": "A",
+                "reply_markup": {
+                    "keyboard": [[{"text": "B"}]],
+                    "one_time_keyboard": True,
+                    "resize_keyboard": True,
+                },
+            }
+        ],
+    )
+    bot.method_calls.clear()
+
+    await bot.process_new_updates([tg_update_message_to_bot(USER_ID, first_name="User", text="B")])
+    assert_method_call_dictified_kwargs_include(
+        bot.method_calls["send_message"],
+        [
+            {
+                "chat_id": 1312,
+                "text": "B",
+                "reply_markup": {
+                    "keyboard": [[{"text": "C"}], [{"text": "<-"}]],
+                    "one_time_keyboard": True,
+                    "resize_keyboard": True,
+                },
+            }
+        ],
+    )
+    bot.method_calls.clear()
+
+    await bot.process_new_updates([tg_update_message_to_bot(USER_ID, first_name="User", text="C")])
+    assert_method_call_dictified_kwargs_include(
+        bot.method_calls["send_message"],
+        [
+            {
+                "chat_id": 1312,
+                "text": "C",
+                "reply_markup": {
+                    "keyboard": [[{"text": "finish"}], [{"text": "<-"}]],
+                    "one_time_keyboard": True,
+                    "resize_keyboard": True,
+                },
+            }
+        ],
+    )
+    bot.method_calls.clear()
+
+    await bot.process_new_updates(
+        [
+            tg_update_message_to_bot(USER_ID, first_name="User", text="<-"),
+            tg_update_message_to_bot(USER_ID, first_name="User", text="<-"),
+        ]
+    )
+    assert_method_call_dictified_kwargs_include(
+        bot.method_calls["send_message"],
+        [
+            {
+                "chat_id": 1312,
+                "text": "B",
+                "reply_markup": {
+                    "keyboard": [[{"text": "C"}], [{"text": "<-"}]],
+                    "one_time_keyboard": True,
+                    "resize_keyboard": True,
+                },
+            },
+            {
+                "chat_id": 1312,
+                "text": "A",
+                "reply_markup": {
+                    "keyboard": [[{"text": "B"}]],
+                    "one_time_keyboard": True,
+                    "resize_keyboard": True,
                 },
             },
         ],

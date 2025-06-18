@@ -4,11 +4,10 @@ from pydantic import BaseModel
 from telebot import types as tg
 from telebot.api import ApiHTTPException
 from telebot.callback_data import CallbackData
-from telebot.types import service as tg_service_types
+from telebot.types import constants as tgconst
+from telebot.types import service as tgservice
 from telebot_components.language import any_text_to_str
-from telebot_components.menu.menu import (
-    MenuMechanism,
-)
+from telebot_components.menu.menu import MenuMechanism
 from telebot_components.utils import TextMarkup
 
 from telebot_constructor.store.menu import ButtonActionData
@@ -109,7 +108,7 @@ class MenuBlock(UserFlowBlock):
                         )
                     )
 
-            if self.menu.config.back_label and can_go_back:
+            if can_go_back and self.menu.config.back_label is not None:
                 action = ButtonActionData(block_id=self.block_id, route_to_block_id=None)
                 button_actions[action.md5_hash] = action
                 inline_buttons.append(
@@ -125,7 +124,7 @@ class MenuBlock(UserFlowBlock):
             reply_markup = tg.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             for item in self.menu.items:
                 reply_markup.add(tg.KeyboardButton(text=any_text_to_str(item.label, language)))
-            if self.menu.config.back_label:
+            if self.menu.config.back_label is not None and can_go_back:
                 reply_markup.add(tg.KeyboardButton(text=any_text_to_str(self.menu.config.back_label, language)))
 
         if updateable_message_id is not None and self.menu.config.mechanism.is_updateable():
@@ -154,20 +153,30 @@ class MenuBlock(UserFlowBlock):
                     self.block_id,
                 )
 
+    async def get_previous_block_id(self, history_id: str) -> str | None:
+        # NOTE: to understand why 2 pops are needed, consider two-level menu A->B
+        # - user enters A, "A" is pushed into history
+        # - user enters B, "B" is pushed into history, which is not ["A", "B"]
+        # - user presses "back", to get the destination we need to pop two last elements
+        #   and route to the next-to-last, "A"; the history is empty
+        # - user enters A and it's pushed back into history
+        await self._metadata_store.user_history_store.pop(history_id)
+        return await self._metadata_store.user_history_store.pop(history_id)
+
     async def setup(self, context: UserFlowSetupContext) -> SetupResult:
         self._logger = context.make_instrumented_logger(__name__, self.block_id)
         self._language_store = context.language_store
         self._metadata_store = context.menu_metadata_store
 
         @context.bot.callback_query_handler(callback_data=BUTTON_ACTION_CALLBACK_DATA, auto_answer=True)  # type: ignore
-        async def handle_menu(call: tg.CallbackQuery) -> tg_service_types.HandlerResult | None:
+        async def handle_inline_menu(call: tg.CallbackQuery) -> tgservice.HandlerResult | None:
             cbk_data = BUTTON_ACTION_CALLBACK_DATA.parse(call.data)
             action = await self._metadata_store.button_action_store.load(cbk_data["hash"])
             if action is None:
                 return None
             if action.block_id != self.block_id:
                 # the button was created by a different menu block and should be handled from there
-                return tg_service_types.HandlerResult(continue_to_other_handlers=True)
+                return tgservice.HandlerResult(continue_to_other_handlers=True)
 
             if action.route_to_block_id is not None:
                 next_block_id = action.route_to_block_id
@@ -175,8 +184,7 @@ class MenuBlock(UserFlowBlock):
                 history_id = self._history_session_id(call.from_user.id, call.message.id)
                 if history_id is None:
                     return None
-                await self._metadata_store.user_history_store.pop(history_id)
-                maybe_next_block_id = await self._metadata_store.user_history_store.pop(history_id)
+                maybe_next_block_id = await self.get_previous_block_id(history_id)
                 if maybe_next_block_id is None:
                     return None
                 else:
@@ -193,10 +201,48 @@ class MenuBlock(UserFlowBlock):
             )
             return None
 
-        # TODO: reply kbd handler
+        @context.bot.message_handler(
+            priority=1000,
+            chat_types=[tgconst.ChatType.private],
+            func=context.active_block_filter(self.block_id),
+        )  # type: ignore
+        async def maybe_handle_reply_menu(message: tg.Message) -> tgservice.HandlerResult | None:
+            passthrough = tgservice.HandlerResult(continue_to_other_handlers=True)
+            if self.menu.config.mechanism is not MenuMechanism.REPLY_KEYBOARD:
+                return passthrough
+
+            next_block_ctx = UserFlowContext.from_setup_context(
+                context,
+                user=message.from_user,
+                chat=None,
+                updateable_message_id=None,
+                last_update_content=message,
+            )
+
+            for item in self.menu.items:
+                if item.next_block_id is None:
+                    continue
+
+                item_texts = [item.label] if isinstance(item.label, str) else list(item.label.values())
+                for t in item_texts:
+                    if message.text == t:
+                        await context.enter_block(item.next_block_id, next_block_ctx)
+                        return None
+
+            if self.menu.config.back_label is not None:
+                back_label = self.menu.config.back_label
+                back_texts = [back_label] if isinstance(back_label, str) else list(back_label.values())
+                if any(t == message.text for t in back_texts):
+                    history_id = self._history_session_id(message.from_user.id, None)
+                    if history_id is not None:
+                        maybe_next_block_id = await self.get_previous_block_id(history_id)
+                        if maybe_next_block_id is not None:
+                            await context.enter_block(maybe_next_block_id, next_block_ctx)
+
+            return passthrough
 
         @context.bot.callback_query_handler(callback_data=NOOP_CALLBACK_DATA, auto_answer=True)  # type: ignore
-        async def handle_noop(call: tg.CallbackQuery) -> tg_service_types.HandlerResult | None:
+        async def handle_noop(call: tg.CallbackQuery) -> tgservice.HandlerResult | None:
             return None
 
         return SetupResult.empty()
