@@ -51,6 +51,11 @@ class UserFlowSetupContext:
 
 
 @dataclass(frozen=True)
+class MenuBlocksContext:
+    updateable_message_id: int | None
+
+
+@dataclass(frozen=True)
 class UserFlowContext:
     bot: AsyncTeleBot
     banned_users_store: BannedUsersStore
@@ -59,7 +64,7 @@ class UserFlowContext:
     chat: tg.Chat | None
     user: tg.User
     last_update_content: service_types.UpdateContent | None
-    updateable_message_id: int | None
+    menu_blocks_ctx: MenuBlocksContext | None
 
     visited_block_ids: set[str] = dataclasses.field(default_factory=set[str])
 
@@ -70,7 +75,7 @@ class UserFlowContext:
         chat: tg.Chat | None,
         user: tg.User,
         last_update_content: service_types.UpdateContent | None,
-        updateable_message_id: int | None = None,
+        menu_blocks_ctx: MenuBlocksContext | None = None,
     ) -> "UserFlowContext":
         return UserFlowContext(
             bot=setup_ctx.bot,
@@ -80,7 +85,7 @@ class UserFlowContext:
             chat=chat,
             user=user,
             last_update_content=last_update_content,
-            updateable_message_id=updateable_message_id,
+            menu_blocks_ctx=menu_blocks_ctx,
         )
 
 

@@ -13,6 +13,7 @@ from telebot_components.utils import TextMarkup
 from telebot_constructor.store.menu import ButtonActionData
 from telebot_constructor.user_flow.blocks.base import UserFlowBlock
 from telebot_constructor.user_flow.types import (
+    MenuBlocksContext,
     SetupResult,
     UserFlowContext,
     UserFlowSetupContext,
@@ -36,6 +37,12 @@ class MenuItem(BaseModel):
         if len(specified_options) > 1:
             raise ValueError("At most one of the options may be specified: submenu, next block, or link URL")
         self._is_noop = len(specified_options) == 0
+
+        # NOTE: for reply keyboards we must strip button captions for later text matching
+        if isinstance(self.label, str):
+            self.label = self.label.strip()
+        else:
+            self.label = {lang: text.strip() for lang, text in self.label.items()}
 
 
 class MenuConfig(BaseModel):
@@ -72,10 +79,18 @@ class MenuBlock(UserFlowBlock):
     async def enter(self, context: UserFlowContext) -> None:
         user = context.user
         language = None if self._language_store is None else await self._language_store.get_user_language(context.user)
-        updateable_message_id = context.updateable_message_id
+        is_nested_menu = context.menu_blocks_ctx is not None
+        updateable_message_id = (
+            context.menu_blocks_ctx.updateable_message_id if context.menu_blocks_ctx is not None else None
+        )
         history_session_id = self._history_session_id(user.id, updateable_message_id)
-        can_go_back = history_session_id is not None and (
-            await self._metadata_store.user_history_store.length(history_session_id) > 0
+        if history_session_id is not None and not is_nested_menu:
+            await self._metadata_store.user_history_store.drop(history_session_id)
+
+        can_go_back = (
+            is_nested_menu
+            and history_session_id is not None
+            and (await self._metadata_store.user_history_store.length(history_session_id) > 0)
         )
         if history_session_id is not None:
             await self._metadata_store.user_history_store.push(history_session_id, self.block_id)
@@ -178,6 +193,7 @@ class MenuBlock(UserFlowBlock):
                 # the button was created by a different menu block and should be handled from there
                 return tgservice.HandlerResult(continue_to_other_handlers=True)
 
+            # TODO: lock inline buttons?
             if action.route_to_block_id is not None:
                 next_block_id = action.route_to_block_id
             else:
@@ -195,7 +211,9 @@ class MenuBlock(UserFlowBlock):
                     context,
                     user=call.from_user,
                     chat=None,
-                    updateable_message_id=call.message.id if self.menu.config.mechanism.is_updateable() else None,
+                    menu_blocks_ctx=MenuBlocksContext(
+                        updateable_message_id=call.message.id if self.menu.config.mechanism.is_updateable() else None,
+                    ),
                     last_update_content=call,
                 ),
             )
@@ -215,7 +233,7 @@ class MenuBlock(UserFlowBlock):
                 context,
                 user=message.from_user,
                 chat=None,
-                updateable_message_id=None,
+                menu_blocks_ctx=MenuBlocksContext(updateable_message_id=None),
                 last_update_content=message,
             )
 
