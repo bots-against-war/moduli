@@ -11,7 +11,7 @@ from telebot_constructor.utils.store import CachedKeyValueStore
 
 class ButtonActionData(pydantic.BaseModel):
     block_id: str
-    route_to_block_id: str | None
+    route_to_block_id: str | None  # None = back button, popping block id from history
 
     def model_post_init(self, context: Any) -> None:
         self._md5_hash = hashlib.md5(self.model_dump_json().encode("utf-8")).hexdigest()
