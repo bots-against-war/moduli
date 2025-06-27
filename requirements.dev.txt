@@ -773,9 +773,9 @@ ruff==0.11.13 ; python_version >= "3.12" and python_version < "4.0" \
     --hash=sha256:b4385285e9179d608ff1d2fb9922062663c658605819a6876d8beef0c30b7f3b \
     --hash=sha256:d237a496e0778d719efb05058c64d28b757c77824e04ffe8796c7436e26712b7 \
     --hash=sha256:d28ce58b5ecf0f43c1b71edffabe6ed7f245d5336b17805803312ec9bc665933
-setuptools==73.0.1 ; python_version >= "3.12" and python_version < "4.0" \
-    --hash=sha256:b208925fcb9f7af924ed2dc04708ea89791e24bde0d3020b27df0e116088b34e \
-    --hash=sha256:d59a3e788ab7e012ab2c4baed1b376da6366883ee20d7a5fc426816e3d7b1193
+setuptools==80.9.0 ; python_version >= "3.12" and python_version < "4.0" \
+    --hash=sha256:062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922 \
+    --hash=sha256:f36b47402ecde768dbfafc46e8e4207b4360c654f1f3bb84475f0a28628fb19c
 tenacity==8.5.0 ; python_version >= "3.12" and python_version < "4.0" \
     --hash=sha256:8bc6c0c8a09b31e6cad13c47afbed1a567518250a9a171418582ed8d9c20ca78 \
     --hash=sha256:b594c2a5945830c267ce6b79a166228323ed52718f30302c1359836112346687
