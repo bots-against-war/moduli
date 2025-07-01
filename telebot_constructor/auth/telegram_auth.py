@@ -93,10 +93,12 @@ class TelegramAuth(Auth):
 
     async def get_bot_username(self) -> str:
         if self.bot_username is None:
+            bot_user: tg.User | None = None
             try:
                 async for attempt in rate_limit_retry():
                     with attempt:
                         bot_user = await self.bot.get_me()
+                assert bot_user is not None, "No tries made?"
                 logger.info(f"Bot user loaded: {bot_user.to_json()}")
             except Exception:
                 logger.exception("Error getting auth bot user, probably an invalid token")
@@ -121,7 +123,7 @@ class TelegramAuth(Auth):
             return None
         return LoggedInUser(
             auth_type=AuthType.TELEGRAM_AUTH,
-            username=user_id(tg_user_id),
+            username=_telegram_auth_user_id(tg_user_id),
             name="<unused>",
             display_username="<unused>",
             userpic=None,
@@ -143,7 +145,7 @@ class TelegramAuth(Auth):
         logger.info("Auth OK")
         return LoggedInUser(
             auth_type=AuthType.TELEGRAM_AUTH,
-            username=user_id(tg_user_data.id),
+            username=_telegram_auth_user_id(tg_user_data.id),
             name=tg_user_data.full_name,
             display_username=tg_user_data.username,
             userpic=(
@@ -224,12 +226,15 @@ class TelegramAuth(Auth):
             return BotRunner(bot_prefix="telegram-auth-bot", bot=self.bot, background_jobs=[])
 
     def owner_chat_id(self, user_id: str) -> int:
-        return parse_tg_user_id(user_id)
+        try:
+            assert user_id.startswith(TELEGRAM_AUTH_PREFFIX), f"TG auth ID must start with {TELEGRAM_AUTH_PREFFIX}"
+            return int(user_id.removeprefix(TELEGRAM_AUTH_PREFFIX))
+        except Exception:
+            raise ValueError(f"Not a valid Telegram Auth user id: {user_id}")
 
 
-def user_id(tg_user_id: int) -> str:
-    return f"telegram_user_{tg_user_id}"
+TELEGRAM_AUTH_PREFFIX = "telegram_user_"
 
 
-def parse_tg_user_id(user_id: str) -> int:
-    return int(user_id.removeprefix("telegram_user_"))
+def _telegram_auth_user_id(tg_user_id: int) -> str:
+    return TELEGRAM_AUTH_PREFFIX + str(tg_user_id)
