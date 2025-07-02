@@ -206,6 +206,7 @@ class TelegramAuth(Auth):
             access_token = await self.access_token_by_start_param.load(start_param)
             if access_token is None:
                 return continue_
+            await self.access_token_by_start_param.drop(start_param)  # start param is single-use
             user = message.from_user
             tg_user_data = await TelegramUserData.from_user(self.bot, message.from_user)
             await self.tg_user_data_by_access_code_store.save(access_token, tg_user_data)
