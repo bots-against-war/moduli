@@ -406,8 +406,6 @@ class ModuliApp:
             bot_user = await bot.get_me()
         except Exception as e:
             return str(e)
-        if bot_user is None:
-            return None
         return BotTokenValidationResult(
             name=bot_user.full_name,
             username=bot_user.username or "",  # guaranteed in practice

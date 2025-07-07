@@ -264,3 +264,4 @@ landing/build
 !landing/src/lib
 debug*.py
 memray*
+temp.json
