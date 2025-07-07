@@ -178,6 +178,8 @@ class TelegramAuth(Auth):
                 logger.info("Tg user not yet recorded for the access token")
                 raise web.HTTPNotFound()
             logger.info("Associated TG user with access code, returning to the client")
+            # ensuring start param is single-use
+            await self.access_token_by_start_param.drop(bot_start_param)
             return web.Response(
                 text="OK",
                 headers={hdrs.SET_COOKIE: f"{self.ACCESS_TOKEN_COOKIE_NAME}={access_token}; Path=/"},
@@ -206,7 +208,6 @@ class TelegramAuth(Auth):
             access_token = await self.access_token_by_start_param.load(start_param)
             if access_token is None:
                 return continue_
-            await self.access_token_by_start_param.drop(start_param)  # start param is single-use
             user = message.from_user
             tg_user_data = await TelegramUserData.from_user(self.bot, message.from_user)
             await self.tg_user_data_by_access_code_store.save(access_token, tg_user_data)
