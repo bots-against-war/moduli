@@ -10,7 +10,7 @@ import uuid
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
-from typing import Optional, Type, TypeVar
+from typing import Awaitable, Callable, Optional, Type, TypeVar
 
 import pydantic
 import slugify
@@ -111,6 +111,7 @@ class ModuliApp:
         media_store: MediaStore | None = None,
         add_swagger: bool = False,
         server_side_shared_bots: dict[str, dict[str, set[str]]] | None = None,
+        server_side_config_processors: dict[str, dict[str, Callable[[BotConfig], Awaitable[BotConfig]]]] | None = None,
     ) -> None:
         self.auth = auth
         self.secret_store = secret_store
@@ -132,6 +133,7 @@ class ModuliApp:
         self._bot_factory: BotFactory = AsyncTeleBot  # for overriding during tests
 
         self._server_side_shared_bots = server_side_shared_bots or {}
+        self._server_side_config_processors = server_side_config_processors or {}
 
     @property
     def runner(self) -> ConstructedBotRunner:
@@ -305,7 +307,19 @@ class ModuliApp:
             alerts_chat_id=ctx.alert_chat_id,
         )
 
+    async def _apply_server_side_preprocessor(self, owner_id: str, bot_id: str, bot_config: BotConfig) -> BotConfig:
+        log_prefix = self._log_prefix(owner_id, bot_id)
+        if custom_processor := self._server_side_config_processors.get(bot_id, {}).get(owner_id):
+            logger.info(f"{log_prefix} Found server-side processor, applying to config...")
+            try:
+                return await custom_processor(bot_config)
+            except Exception:
+                logger.exception(f"{log_prefix} Error applying custom processor, will run without it")
+
+        return bot_config
+
     async def _construct_bot(self, owner_id: str, bot_id: str, bot_config: BotConfig) -> BotRunner:
+        bot_config = await self._apply_server_side_preprocessor(owner_id, bot_id, bot_config)
         return await construct_bot(
             owner_id=owner_id,
             bot_id=bot_id,
@@ -572,6 +586,13 @@ class ModuliApp:
             #       it should be removed from here when frontend stops depending on it :)
             if "with_display_name" in request.query:
                 config.display_name = await self.store.load_bot_display_name(a.owner_id, a.bot_id)
+
+            if "preprocessed" in request.query:
+                config = await self._apply_server_side_preprocessor(
+                    owner_id=a.owner_id,
+                    bot_id=a.bot_id,
+                    bot_config=config,
+                )
             return web.json_response(text=config.model_dump_json())
 
         @routes.delete("/api/config/{bot_id}")

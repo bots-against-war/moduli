@@ -99,11 +99,14 @@ GetActiveUserFlowBlockId = Callable[[int], Awaitable[UserFlowBlockId | None]]
 class BotCommandInfo:
     command: tg.BotCommand
     scope: tg.BotCommandScope | None
+    rank: int | None = None
 
     def __str__(self) -> str:
-        args_str = f"command={self.command.to_json()}"
+        args_str = f"command={self.command.to_dict()}"
         if self.scope is not None:
-            args_str += f", scope={self.scope.to_json()}"
+            args_str += f", scope={self.scope.type}"
+        if self.rank is not None:
+            args_str += f", rank={self.rank}"
         return f"{self.__class__.__name__}({args_str})"
 
     def scope_key(self) -> str:
