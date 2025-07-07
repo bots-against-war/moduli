@@ -130,8 +130,13 @@ async def construct_bot(
                         commands=[cmd.command for cmd in command_info_batch],
                         scope=command_info_batch[0].scope,
                     )
-        except Exception:
-            logger.exception("Error setting bot commands")
+        except Exception as e:
+            if "chat not found" in str(e):
+                # this usually happens when users create bot with PM as admin chat but don't
+                # activate the bot
+                logger.info(f"Failed to set bot commands: {e}")
+            else:
+                logger.exception("Error setting bot commands")
 
     if group_chat_discovery_handler is not None:
         group_chat_discovery_handler.setup_handlers(owner_id=owner_id, bot_id=bot_id, bot=bot)
