@@ -57,6 +57,8 @@ class Menu(BaseModel):
     config: MenuConfig
     markup: TextMarkup = TextMarkup.NONE
 
+    disable_link_preview: bool = False
+
     def model_post_init(self, __conext: Any) -> None:
         self._text_preprocessed = preprocess_for_telegram(self.text, self.markup)
 
@@ -150,6 +152,7 @@ class MenuBlock(UserFlowBlock):
                     parse_mode=self.menu.markup.parse_mode(),
                     message_id=updateable_message_id,
                     reply_markup=reply_markup,
+                    disable_web_page_preview=self.menu.disable_link_preview,
                 )
                 return
             except ApiHTTPException as e:
@@ -160,6 +163,7 @@ class MenuBlock(UserFlowBlock):
             text=any_text_to_str(self.menu._text_preprocessed, language),
             parse_mode=self.menu.markup.parse_mode(),
             reply_markup=reply_markup,
+            disable_web_page_preview=self.menu.disable_link_preview,
         )
         if history_session_id is None:
             if new_history_session_id := self._history_session_id(user.id, new_message.id):
