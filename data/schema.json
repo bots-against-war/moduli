@@ -605,6 +605,18 @@
           ],
           "default": null,
           "title": "Short Description"
+        },
+        "menu_rank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Menu Rank"
         }
       },
       "required": [
@@ -726,6 +738,11 @@
         },
         "markup": {
           "$ref": "#/$defs/TextMarkup"
+        },
+        "disable_link_preview": {
+          "default": false,
+          "title": "Disable Link Preview",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1572,6 +1589,11 @@
         "markup": {
           "$ref": "#/$defs/TextMarkup",
           "default": "none"
+        },
+        "disable_link_preview": {
+          "default": false,
+          "title": "Disable Link Preview",
+          "type": "boolean"
         }
       },
       "required": [
