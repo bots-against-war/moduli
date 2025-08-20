@@ -155,6 +155,7 @@ async def test_bot_config(
                         "next_block_id": None,
                         "scope": "private",
                         "short_description": None,
+                        "menu_rank": None,
                     },
                     "catch_all": None,
                     "regex": None,
