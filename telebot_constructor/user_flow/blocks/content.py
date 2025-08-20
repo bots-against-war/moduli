@@ -34,6 +34,8 @@ class ContentText(BaseModel):
     text: LocalizableText
     markup: TextMarkup
 
+    disable_link_preview: bool = False
+
     _preprocessed_text: LocalizableText | None = None
 
     @property
@@ -172,6 +174,7 @@ class ContentBlock(UserFlowBlock):
                         text=any_text_to_str(content.text.preprocessed, language),
                         parse_mode=parse_mode,
                         reply_markup=tg.ReplyKeyboardRemove(),
+                        disable_web_page_preview=content.text.disable_link_preview,
                     )
                 else:
                     self._logger.error("Empty content block: no text and no attachments!")
