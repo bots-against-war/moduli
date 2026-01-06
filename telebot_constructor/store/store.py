@@ -60,6 +60,7 @@ class Store:
             name="bot-events",
             prefix=CONSTRUCTOR_PREFIX,
             redis=redis,
+            expiration_time=None,
         )
 
         # owner id -> bot id -> bot display name
