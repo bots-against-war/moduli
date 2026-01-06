@@ -580,6 +580,7 @@ class ModuliApp:
             """
             a = await self.authorize(
                 request,
+                # NOTE: this might have been better expressed with POST/PUT distinction...
                 allow_create_new_bot=self.parse_query_param_bool(request, "new", default=False),
             )
             existing_bot_config = await self.store.load_bot_config(a.owner_id, a.bot_id)
