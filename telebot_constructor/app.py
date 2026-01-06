@@ -113,6 +113,7 @@ class ModuliApp:
         # bot id -> owner -> [authorized actors]
         server_side_shared_bots: dict[str, dict[str, set[str]]] | None = None,
         server_side_config_processors: dict[str, dict[str, Callable[[BotConfig], Awaitable[BotConfig]]]] | None = None,
+        server_side_bot_processors: dict[str, dict[str, Callable[[BotRunner], Awaitable[BotRunner]]]] | None = None,
         root_user_ids: list[str] | None = None,
     ) -> None:
         self.auth = auth
@@ -136,6 +137,7 @@ class ModuliApp:
 
         self._server_side_shared_bots = server_side_shared_bots or {}
         self._server_side_config_processors = server_side_config_processors or {}
+        self._server_side_bot_processors = server_side_bot_processors or {}
         self._root_user_ids = set(root_user_ids or [])
 
     @property
@@ -360,38 +362,43 @@ class ModuliApp:
             alerts_chat_id=ctx.alert_chat_id,
         )
 
-    async def _apply_server_side_preprocessor(self, owner_id: str, bot_id: str, bot_config: BotConfig) -> BotConfig:
-        log_prefix = self._log_prefix(owner_id, bot_id)
+    async def _with_server_side_config_processor(self, owner_id: str, bot_id: str, bot_config: BotConfig) -> BotConfig:
         if custom_processor := self._server_side_config_processors.get(bot_id, {}).get(owner_id):
-            logger.info(f"{log_prefix} Found server-side processor, applying to config...")
+            log_prefix = self._log_prefix(owner_id, bot_id)
+            logger.info(f"{log_prefix} Found server-side config processor, applying...")
             try:
                 return await custom_processor(bot_config)
             except Exception:
-                logger.exception(f"{log_prefix} Error applying custom processor, will run without it")
+                logger.exception(f"{log_prefix} Error applying server-side config processor, will run without it")
 
         return bot_config
 
     async def _construct_bot(self, owner_id: str, bot_id: str, bot_config: BotConfig) -> BotRunner:
-        bot_config = await self._apply_server_side_preprocessor(owner_id, bot_id, bot_config)
-        return await construct_bot(
+        bot_config = await self._with_server_side_config_processor(owner_id, bot_id, bot_config)
+
+        runner = await construct_bot(
             owner_id=owner_id,
             bot_id=bot_id,
             bot_config=bot_config,
             secret_store=self.secret_store,
-            form_results_store=self.store.form_results.adapter_for(
-                owner_id=owner_id,
-                bot_id=bot_id,
-            ),
-            errors_store=self.store.errors.adapter_for(
-                owner_id=owner_id,
-                bot_id=bot_id,
-            ),
+            form_results_store=self.store.form_results.adapter_for(owner_id=owner_id, bot_id=bot_id),
+            errors_store=self.store.errors.adapter_for(owner_id=owner_id, bot_id=bot_id),
             redis=self.redis,
             group_chat_discovery_handler=self.group_chat_discovery_handler,
             owner_chat_id=self.auth.owner_chat_id(owner_id),
             media_store=self.media_store.adapter_for(owner_id) if self.media_store else None,
             _bot_factory=self._bot_factory,
         )
+
+        if processor := self._server_side_bot_processors.get(bot_id, {}).get(owner_id):
+            log_prefix = self._log_prefix(owner_id, bot_id)
+            logger.info(f"{log_prefix} Found server-side bot processor, applying...")
+            try:
+                runner = await processor(runner)
+            except Exception:
+                logger.exception(f"{log_prefix} Error applying custom bot processor, will run without it")
+
+        return runner
 
     def _log_prefix(
         self,
@@ -644,11 +651,9 @@ class ModuliApp:
             if "with_display_name" in request.query:
                 config.display_name = await self.store.load_bot_display_name(a.owner_id, a.bot_id)
 
-            if "preprocessed" in request.query:
-                config = await self._apply_server_side_preprocessor(
-                    owner_id=a.owner_id,
-                    bot_id=a.bot_id,
-                    bot_config=config,
+            if "server_side_processing" in request.query:
+                config = await self._with_server_side_config_processor(
+                    owner_id=a.owner_id, bot_id=a.bot_id, bot_config=config
                 )
             return web.json_response(text=config.model_dump_json())
 
