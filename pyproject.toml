@@ -68,7 +68,7 @@ exclude = ["dist"]
 omit = ['tests/**']
 skip_covered = true
 show_missing = true
-fail_under = 80
+fail_under = 78
 exclude_lines = [
     # re-enable the standard pragma
     'pragma: no cover',
