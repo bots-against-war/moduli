@@ -2,6 +2,7 @@
   import truncate from "@svackages/truncate";
   import { type BotVersionInfo } from "../api/types";
   import Timestamp from "./Timestamp.svelte";
+  import { loggedInUserStore } from "../globalStateStores";
 
   export let ver: BotVersionInfo;
   export let carded: boolean = true;
@@ -12,6 +13,9 @@
     <strong>v{ver.version + 1}</strong>
     {#if ver.metadata.timestamp}
       · <Timestamp timestamp={ver.metadata.timestamp} timeClass="text-gray-500" />
+    {/if}
+    {#if ver.metadata.author_username !== $loggedInUserStore.username}
+      · <span class="text-gray-500">@{ver.metadata.author_username}</span>
     {/if}
   </div>
   {#if ver.metadata.message}

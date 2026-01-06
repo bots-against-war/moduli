@@ -88,6 +88,10 @@ class Store:
     def _composite_key(self, owner_id: str, bot_id: str) -> str:
         return f"{owner_id}/{bot_id}"
 
+    def _parse_composite_key(self, key: str) -> tuple[str, str]:
+        owner_id, bot_id = key.split("/", maxsplit=1)
+        return owner_id, bot_id
+
     async def load_bot_config(self, owner_id: str, bot_id: str, version: BotVersion = -1) -> BotConfig | None:
         load_version = version if version != "stub" else -1
         if res := await self._config_store.load_version(
@@ -121,10 +125,17 @@ class Store:
     async def is_bot_exists(self, owner_id: str, bot_id: str) -> bool:
         return await self.bot_config_version_count(owner_id, bot_id) > 0
 
+    async def list_all_bot_ids(self) -> list[tuple[str, str]]:
+        keys = await self._config_store.list_keys()
+        return [self._parse_composite_key(k) for k in keys]
+
     async def list_bot_ids(self, owner_id: str) -> list[str]:
         keys = await self._config_store.find_keys(pattern=self._composite_key(owner_id, "*"))
-        prefix = self._composite_key(owner_id, "")
-        return [k.removeprefix(prefix) for k in keys]
+        return [self._parse_composite_key(k)[1] for k in keys]
+
+    async def list_bot_owner_ids(self, bot_id: str) -> list[str]:
+        keys = await self._config_store.find_keys(pattern=self._composite_key("*", bot_id))
+        return [self._parse_composite_key(k)[0] for k in keys]
 
     # running status methods
 
@@ -209,6 +220,7 @@ class Store:
                     admin_chat_ids.append(b.form.results_export.to_chat.chat_id)
 
         return BotInfo(
+            owner_id=owner_id,
             bot_id=bot_id,
             display_name=await self.load_bot_display_name(owner_id, bot_id) or bot_id,
             running_version=running_version,

@@ -2,8 +2,12 @@ import { toDataResult, type Result } from "../utils";
 import type { BotConfig, SaveBotConfigVersionPayload } from "./types";
 import { fetchApi } from "./utils";
 
-export async function saveBotConfig(botId: string, payload: SaveBotConfigVersionPayload): Promise<Result<BotConfig>> {
-  const res = await fetchApi(`/config/${encodeURIComponent(botId)}`, {
+export async function saveBotConfig(
+  botId: string,
+  payload: SaveBotConfigVersionPayload,
+  new_: boolean,
+): Promise<Result<BotConfig>> {
+  const res = await fetchApi(`/config/${encodeURIComponent(botId)}?new=${new_ ? "true" : "false"}`, {
     method: "POST",
     body: JSON.stringify(payload),
   });

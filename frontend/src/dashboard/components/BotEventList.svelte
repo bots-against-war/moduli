@@ -2,6 +2,7 @@
   import { t } from "svelte-i18n";
   import { botEventTimestamp, type AnyBotEvent } from "../../api/typeUtils";
   import Timestamp from "../../components/Timestamp.svelte";
+  import { loggedInUserStore } from "../../globalStateStores";
 
   export let events: AnyBotEvent[];
   export let limit: number | null = null;
@@ -29,6 +30,9 @@
           {/if}
           {#if event.timestamp}
             · <Timestamp timestamp={event.timestamp} />
+          {/if}
+          {#if event.username !== $loggedInUserStore.username}
+            · <span class="text-gray-500">@{event.username}</span>
           {/if}
         </div>
       </li>

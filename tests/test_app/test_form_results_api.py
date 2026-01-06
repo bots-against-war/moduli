@@ -107,6 +107,7 @@ async def test_form_results_api(
     resp = await client.get("/api/info/mybot")
     assert resp.status == 200
     assert mask_recent_timestamps(await resp.json()) == {
+        "owner_id": "no-auth",
         "bot_id": "mybot",
         "display_name": "my test bot",
         "running_version": 0,
@@ -182,6 +183,7 @@ async def test_form_results_api(
     resp = await client.get("/api/info/mybot")
     assert resp.status == 200
     assert mask_recent_timestamps(await resp.json()) == {
+        "owner_id": "no-auth",
         "bot_id": "mybot",
         "display_name": "my test bot",
         "running_version": 0,
@@ -248,6 +250,7 @@ async def test_form_results_api(
             },
         ],
         "bot_info": {
+            "owner_id": "no-auth",
             "bot_id": "mybot",
             "display_name": "my test bot",
             "forms_with_responses": [],
@@ -295,6 +298,7 @@ async def test_form_results_api(
             },
         ],
         "bot_info": {
+            "owner_id": "no-auth",
             "bot_id": "mybot",
             "display_name": "my test bot",
             "forms_with_responses": [],

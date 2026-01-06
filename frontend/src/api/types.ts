@@ -214,6 +214,7 @@ export type Username2 = string;
 export type Name6 = string;
 export type DisplayUsername = string | null;
 export type Userpic1 = string | null;
+export type OwnerId = string;
 export type BotId = string;
 export type DisplayName1 = string;
 export type RunningVersion = number | null;
@@ -617,6 +618,7 @@ export interface LoggedInUser {
   [k: string]: unknown;
 }
 export interface BotInfo {
+  owner_id: OwnerId;
   bot_id: BotId;
   display_name: DisplayName1;
   running_version: RunningVersion;

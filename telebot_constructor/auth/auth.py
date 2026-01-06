@@ -63,6 +63,7 @@ class NoAuth(Auth):
             username=self._user_id,
             name="Anonymous user",
             auth_type=AuthType.NO_AUTH,
+            display_username=self._user_id,
             userpic=None,
         )
 

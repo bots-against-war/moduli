@@ -110,8 +110,10 @@ class ModuliApp:
         telegram_files_downloader: Optional[TelegramFilesDownloader] = None,
         media_store: MediaStore | None = None,
         add_swagger: bool = False,
+        # bot id -> owner -> [authorized actors]
         server_side_shared_bots: dict[str, dict[str, set[str]]] | None = None,
         server_side_config_processors: dict[str, dict[str, Callable[[BotConfig], Awaitable[BotConfig]]]] | None = None,
+        root_user_ids: list[str] | None = None,
     ) -> None:
         self.auth = auth
         self.secret_store = secret_store
@@ -134,6 +136,7 @@ class ModuliApp:
 
         self._server_side_shared_bots = server_side_shared_bots or {}
         self._server_side_config_processors = server_side_config_processors or {}
+        self._root_user_ids = set(root_user_ids or [])
 
     @property
     def runner(self) -> ConstructedBotRunner:
@@ -148,7 +151,7 @@ class ModuliApp:
         try:
             logged_in_user = await self.auth.authenticate_request(request)
         except Exception:
-            logger.exception("Error autorizing user")
+            logger.exception("Error authenticating user")
             logged_in_user = None
         if logged_in_user is None:
             raise web.HTTPUnauthorized(reason="Authentication required")
@@ -158,7 +161,17 @@ class ModuliApp:
         logged_in_user = await self._authenticate_full(request)
         return logged_in_user.username
 
-    def _lookup_server_side_shared_bot(self, bot_id: str, actor_id: str) -> str | None:
+    def _is_root(self, actor_id: str) -> bool:
+        return actor_id in self._root_user_ids
+
+    def _is_server_side_authorized(self, owner_id: str, bot_id: str, actor_id: str) -> bool:
+        authorized_actors = self._server_side_shared_bots.get(bot_id, dict()).get(owner_id)
+        if not authorized_actors:
+            return False
+        else:
+            return actor_id in authorized_actors
+
+    def _lookup_owner_for_server_side_shared_bot(self, bot_id: str, actor_id: str) -> str | None:
         for owner_id, shared_with in self._server_side_shared_bots.get(bot_id, dict()).items():
             if actor_id in shared_with:
                 return owner_id
@@ -167,24 +180,64 @@ class ModuliApp:
     async def authorize(
         self,
         request: web.Request,
-        bot_must_exist: bool = True,
+        allow_create_new_bot: bool = False,
         for_bot_id: str | None = None,
     ) -> BotAccessAuthorization:
         actor_id = await self.authenticate(request)
         bot_id = for_bot_id or self.parse_bot_id(request)
-        owner_id = await self.store.load_owner_id(actor_id, bot_id) or self._lookup_server_side_shared_bot(
-            bot_id, actor_id
-        )
+
+        owner_id = None
+        auth_reason = None
+        if requested_owner_id := request.query.get("owner"):
+            if (
+                requested_owner_id == actor_id
+                or self._is_server_side_authorized(requested_owner_id, bot_id, actor_id)
+                or self._is_root(actor_id)
+            ):
+                owner_id = requested_owner_id
+
+            if requested_owner_id == actor_id:
+                auth_reason = "owned bot"
+            elif self._is_server_side_authorized(requested_owner_id, bot_id, actor_id):
+                auth_reason = "server-side shared, explicitly requested"
+            elif self._is_root(actor_id):
+                auth_reason = "actor is root, explicitly requested"
+        elif await self.store.is_bot_exists(actor_id, bot_id):
+            # without explicit owner specified, assume it's the actor
+            owner_id = actor_id
+            auth_reason = "owned bot"
+        elif not allow_create_new_bot:
+            # hack to make direct links to bot work for users as long as they are root/server-side authorized
+            owner_id = self._lookup_owner_for_server_side_shared_bot(bot_id, actor_id)
+            if owner_id is not None:
+                auth_reason = "server-side shared, implicit"
+            elif self._is_root(actor_id):
+                owner_id_matches = await self.store.list_bot_owner_ids(bot_id)
+                if len(owner_id_matches) == 0:
+                    raise web.HTTPNotFound(reason=f'Bot "{bot_id}" does not exist for any owner')
+                elif len(owner_id_matches) != 1:
+                    raise web.HTTPBadRequest(
+                        reason=(
+                            f'Bot "{bot_id}" exists for multiple owners, choose one '
+                            + f"with 'owner' query param: {', '.join(sorted(owner_id_matches))}"
+                        )
+                    )
+                owner_id = owner_id_matches[0]
+                auth_reason = "actor is root, implicit"
+
         if owner_id is None:
-            if bot_must_exist:
-                raise web.HTTPNotFound(reason=f'Bot "{bot_id}" does not exist')
-            else:
+            if allow_create_new_bot:
                 owner_id = actor_id
-        return BotAccessAuthorization(
-            bot_id=bot_id,
-            actor_id=actor_id,
-            owner_id=owner_id,
-        )
+            else:
+                raise web.HTTPNotFound(reason=f'Bot "{bot_id}" does not exist')
+
+        result = BotAccessAuthorization(bot_id=bot_id, actor_id=actor_id, owner_id=owner_id)
+
+        if owner_id != actor_id:
+            log_prefix = self._log_prefix(owner_id=result.owner_id, bot_id=result.bot_id, actor_id=result.actor_id)
+            logger.info(f"{log_prefix} Authorized: {auth_reason}")
+
+        return result
 
     async def load_nondetailed_bot_info(self, a: BotAccessAuthorization) -> BotInfo:
         res = await self.store.load_bot_info(owner_id=a.owner_id, bot_id=a.bot_id, detailed=False)
@@ -525,7 +578,10 @@ class ModuliApp:
                 "200":
                     description: Bot config is updated, the old version of config is returned
             """
-            a = await self.authorize(request, bot_must_exist=False)
+            a = await self.authorize(
+                request,
+                allow_create_new_bot=self.parse_query_param_bool(request, "new", default=False),
+            )
             existing_bot_config = await self.store.load_bot_config(a.owner_id, a.bot_id)
             payload = await self.parse_body_as_model(request, SaveBotConfigVersionPayload)
             await self.store.save_bot_config(
@@ -720,21 +776,40 @@ class ModuliApp:
                 "200":
                     description: List of all bots name and their statuses
             """
-            owner_id = await self.authenticate(request)
-            # TODO: add "shared" bots to the list
-            bot_ids = await self.store.list_bot_ids(owner_id)
-            logger.info(f"Bots owned by {owner_id}: {bot_ids}")
+            actor_id = await self.authenticate(request)
+            detailed = self.parse_query_param_bool(request, "detailed", default=True)
+
+            owner_bot_to_load_set = set[tuple[str, str]]()
+            if self.parse_query_param_bool(request, "owned", default=True):
+                owned_bot_ids = await self.store.list_bot_ids(actor_id)
+                logger.info(f"Loading bots owned by {actor_id}: {owned_bot_ids}")
+                owner_bot_to_load_set.update((actor_id, bot_id) for bot_id in owned_bot_ids)
+            if self.parse_query_param_bool(request, "server_side_shared", default=True):
+                for bot_id, bot_sharing in self._server_side_shared_bots.items():
+                    for owner_id, authorized_actors in bot_sharing.items():
+                        if actor_id in authorized_actors:
+                            logger.info(f"Loading server-side shared bot {bot_id} owned by {owner_id}")
+                            owner_bot_to_load_set.add((owner_id, bot_id))
+            if self._is_root(actor_id) and self.parse_query_param_bool(request, "all", default=False):
+                logger.info("Loading all bots for root user")
+                owner_bot_to_load_set.update(await self.store.list_all_bot_ids())
+
+            owner_bot_to_load = sorted(owner_bot_to_load_set)
+            logger.info(f"Total to load: {len(owner_bot_to_load)} bot infos")
+
             maybe_bot_infos = [
-                await self.store.load_bot_info(
-                    owner_id,
-                    bot_id,
-                    detailed=self.parse_query_param_bool(request, "detailed", default=True),
-                )
-                for bot_id in bot_ids
+                await self.store.load_bot_info(owner_id=owner_id, bot_id=bot_id, detailed=detailed)
+                for owner_id, bot_id in owner_bot_to_load
             ]
+
             bot_infos = [bi for bi in maybe_bot_infos if bi is not None]
+
             if len(maybe_bot_infos) != len(bot_infos):
-                missing_info_bot_ids = [bot_id for bot_id, info in zip(bot_ids, maybe_bot_infos) if info is None]
+                missing_info_bot_ids = [
+                    f"{owner_id}/{bot_id}"
+                    for (owner_id, bot_id), info in zip(owner_bot_to_load, maybe_bot_infos)
+                    if info is None
+                ]
                 logger.error(
                     "Failed to construct bot infos for some of the user's bots, will ignore them: "
                     + f"{missing_info_bot_ids}"

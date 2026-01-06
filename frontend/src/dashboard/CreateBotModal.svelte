@@ -84,7 +84,7 @@
       start: false,
       version_message: null,
       display_name: botDisplayName,
-    });
+    }, true);
 
     if (saveBotResult.ok) {
       error = null;

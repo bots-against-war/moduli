@@ -12,8 +12,8 @@ export async function getBotInfoShort(botId: string): Promise<Result<BotInfo>> {
   return await toDataResult(res);
 }
 
-export async function listBotInfos(): Promise<Result<BotInfo[]>> {
-  const res = await fetchApi(`/info?detailed=false`);
+export async function listBotInfos(allForRoot: boolean): Promise<Result<BotInfo[]>> {
+  const res = await fetchApi(`/info?detailed=false&all=${allForRoot ? "true" : "false"}`);
   return await toDataResult(res);
 }
 
