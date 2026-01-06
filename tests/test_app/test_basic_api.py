@@ -18,7 +18,7 @@ async def test_get_logged_in_user(
         "auth_type": "no_auth",
         "username": "no-auth",
         "name": "Anonymous user",
-        "display_username": None,
+        "display_username": "no-auth",
         "userpic": None,
     }
 
@@ -43,6 +43,7 @@ async def test_bot_config(
     }
     resp = await client.post(
         f"/api/config/{bot_id}",
+        params={"new": "true"},
         json={
             "config": bot_config_1,
             "start": False,
@@ -336,6 +337,7 @@ async def test_admin_chat_ids(
     }
     resp = await client.post(
         f"/api/config/{bot_id}",
+        params={"new": "true"},
         json={
             "config": bot_config_1,
             "start": False,

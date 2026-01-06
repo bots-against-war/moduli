@@ -22,6 +22,7 @@ async def test_group_chat_discovery(
 
     resp = await client.post(
         "/api/config/my-test-bot",
+        params={"new": "true"},
         json={
             "config": {
                 "display_name": "my bot",
