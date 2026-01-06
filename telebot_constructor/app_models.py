@@ -157,6 +157,7 @@ class BotVersionInfo(BaseModel):
 
 
 class BotInfo(BaseModel):
+    owner_id: str
     bot_id: str  # internal constructor bot id
     display_name: str  # user-facing name
     running_version: int | None  # None = bot not running

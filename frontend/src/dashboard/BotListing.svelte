@@ -10,6 +10,7 @@
   import { dashboardPath } from "../routeUtils";
   import { getModalOpener } from "../utils";
   import CreateBotModal from "./CreateBotModal.svelte";
+  import { loggedInUserStore } from "../globalStateStores";
 
   export let botInfos: BotInfo[];
 
@@ -37,6 +38,9 @@
         <a href={dashboardPath(botInfo.bot_id)} class="flex flex-row justify-between">
           <span class="font-bold text-xl">{botInfo.display_name}</span>
           <div class="text-gray-500">
+            {#if botInfo.owner_id !== $loggedInUserStore.username}
+              @{botInfo.owner_id} ·
+            {/if}
             {#if botInfo.last_versions.length > 0}
               <span>v{botInfo.last_versions[botInfo.last_versions.length - 1].version + 1}</span>
               ·

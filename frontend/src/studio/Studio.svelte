@@ -282,7 +282,7 @@
     };
     console.debug(`Saving bot config for ${botId}:`, newBotConfig);
 
-    const res = await saveBotConfig(botId, { config: newBotConfig, version_message: versionMessage, start });
+    const res = await saveBotConfig(botId, { config: newBotConfig, version_message: versionMessage, start }, false);
     isSavingBotConfig = false;
     if (res.ok) {
       savedUfConfig = clone(ufConfig);

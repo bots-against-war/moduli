@@ -83,7 +83,10 @@ async def main() -> None:
         )
     elif auth_type == "NOOP":
         logging.info("Using noop auth")
-        auth = NoAuth(owner_chat_id=int(os.environ["OWNER_CHAT_ID"]))
+        auth = NoAuth(
+            owner_chat_id=int(os.environ["OWNER_CHAT_ID"]),
+            username=os.environ.get("NOOP_AUTH_USERNAME", "no-auth"),
+        )
     else:
         raise ValueError(f"Unexpected auth type: {auth_type!r}")
 
@@ -105,6 +108,8 @@ async def main() -> None:
         static_files_dir=Path("frontend/dist"),
         telegram_files_downloader=telegram_files_downloader,
         media_store=media_store,
+        server_side_shared_bots={"imported-YbTlTI4rxLk": {"no-auth": {"alice"}}},
+        root_user_ids=["no-auth"],
     )
     logging.info("Running app with polling")
     await app.run_polling(port=int(os.environ.get("PORT", 8088)))

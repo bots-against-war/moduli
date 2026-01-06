@@ -79,12 +79,16 @@
         ]),
       },
     };
-    const saveBotResult = await saveBotConfig(tokenValidationResult.suggested_bot_id, {
-      config,
-      start: false,
-      version_message: null,
-      display_name: botDisplayName,
-    });
+    const saveBotResult = await saveBotConfig(
+      tokenValidationResult.suggested_bot_id,
+      {
+        config,
+        start: false,
+        version_message: null,
+        display_name: botDisplayName,
+      },
+      true,
+    );
 
     if (saveBotResult.ok) {
       error = null;

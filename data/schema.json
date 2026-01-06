@@ -271,6 +271,10 @@
     },
     "BotInfo": {
       "properties": {
+        "owner_id": {
+          "title": "Owner Id",
+          "type": "string"
+        },
         "bot_id": {
           "title": "Bot Id",
           "type": "string"
@@ -371,6 +375,7 @@
         }
       },
       "required": [
+        "owner_id",
         "bot_id",
         "display_name",
         "running_version",

@@ -18,7 +18,7 @@ async def test_get_logged_in_user(
         "auth_type": "no_auth",
         "username": "no-auth",
         "name": "Anonymous user",
-        "display_username": None,
+        "display_username": "no-auth",
         "userpic": None,
     }
 
@@ -43,6 +43,7 @@ async def test_bot_config(
     }
     resp = await client.post(
         f"/api/config/{bot_id}",
+        params={"new": "true"},
         json={
             "config": bot_config_1,
             "start": False,
@@ -63,6 +64,7 @@ async def test_bot_config(
     resp_json_1 = mask_recent_timestamps(await resp.json())
     assert resp_json_1 == [
         {
+            "owner_id": "no-auth",
             "bot_id": "test-bot-1312",
             "display_name": "my bot",
             "running_version": None,
@@ -98,6 +100,7 @@ async def test_bot_config(
     resp_json_2 = mask_recent_timestamps(await resp.json())
     assert resp_json_2 == [
         {
+            "owner_id": "no-auth",
             "bot_id": "test-bot-1312",
             "display_name": "my bot",
             "running_version": 0,
@@ -192,6 +195,7 @@ async def test_bot_config(
     assert resp.status == 200
     resp_json_3 = mask_recent_timestamps(await resp.json())
     assert resp_json_3 == {
+        "owner_id": "no-auth",
         "bot_id": "test-bot-1312",
         "display_name": "changed display name",
         "running_version": 1,
@@ -236,6 +240,7 @@ async def test_bot_config(
     assert resp.status == 200
     resp_json_4 = mask_recent_timestamps(await resp.json())
     assert resp_json_4 == {
+        "owner_id": "no-auth",
         "bot_id": "test-bot-1312",
         "display_name": "changed display name",
         "running_version": None,
@@ -332,6 +337,7 @@ async def test_admin_chat_ids(
     }
     resp = await client.post(
         f"/api/config/{bot_id}",
+        params={"new": "true"},
         json={
             "config": bot_config_1,
             "start": False,
@@ -347,6 +353,7 @@ async def test_admin_chat_ids(
     resp_json_1 = mask_recent_timestamps(await resp.json())
     assert resp_json_1 == [
         {
+            "owner_id": "no-auth",
             "bot_id": "test-bot",
             "display_name": "my bot",
             "running_version": None,

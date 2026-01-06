@@ -29,6 +29,7 @@ async def test_bot_level_errors(
     # saving a bot config
     resp = await client.post(
         "/api/config/mybot",
+        params={"new": "true"},
         json={
             "config": {
                 "token_secret_name": "test-token",
