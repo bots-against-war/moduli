@@ -20,7 +20,7 @@ async def main() -> None:
             ),
         )
 
-        owner = int(os.environ["OWNER_ID"])
+        owner = int(os.environ["OWNER_TELEGRAM_ID"])
         source_bot_id = os.environ["SOURCE_BOT_ID"]
         target_bot_id = os.environ["TARGET_BOT_ID"]
 
