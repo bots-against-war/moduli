@@ -515,7 +515,7 @@ class ModuliApp:
             if not secret_value:
                 raise web.HTTPBadRequest(reason="Secret can't be empty")
 
-            is_token = request.query.get("is_token", "false") == "true"
+            is_token = self.parse_query_param_bool(request, "is_token", False)
             if is_token:
                 res = await self.validate_bot_token(secret_value)
                 if isinstance(res, str):
