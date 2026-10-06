@@ -262,6 +262,12 @@ temp.py
 landing/build-kit
 landing/build
 !landing/src/lib
+
+baw-landing/build-kit
+baw-landing/build
+baw-landing/deploy.sh
+!baw-landing/src/lib
+
 debug*.py
 memray*
 temp.json

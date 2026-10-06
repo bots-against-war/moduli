@@ -62,7 +62,7 @@ asyncio_mode = "auto"
 [tool.mypy]
 incremental = false
 files = '.'
-exclude = ["dist"]
+exclude = ["dist", "tests"]
 
 [tool.coverage.report]
 omit = ['tests/**']
