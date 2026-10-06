@@ -48,7 +48,7 @@ from tests.utils import (
         ),
         pytest.param(
             "[link with stuff inside!...](https://google.com)",
-            "[link with stuff inside\\!\\.\\.\\.](https://google.com)\n",
+            "[link with stuff inside\\!\\.\\.\\.](https://google\\.com)\n",
             id="escaping inside of links",
         ),
         pytest.param(

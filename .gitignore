@@ -265,6 +265,7 @@ landing/build
 
 baw-landing/build-kit
 baw-landing/build
+baw-landing/deploy.sh
 !baw-landing/src/lib
 
 debug*.py
