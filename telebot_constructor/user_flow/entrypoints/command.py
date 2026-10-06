@@ -1,5 +1,4 @@
 import enum
-from typing import Optional
 
 from telebot import types as tg
 from telebot.types import constants as tg_const
@@ -25,13 +24,16 @@ class CommandEntryPoint(UserFlowEntryPoint):
     """Basic entrypoint catching Telegram /commands"""
 
     command: str  # without leading slash, e.g. "start" instead of "/start"
-    next_block_id: Optional[UserFlowBlockId]
+    next_block_id: UserFlowBlockId | None
     scope: CommandScope = CommandScope.PRIVATE
-    short_description: Optional[str] = None  # used for native Telegram menu
+
+    # params for native Telegram menu
+    short_description: str | None = None
+    menu_rank: int | None = None
 
     async def setup(self, context: UserFlowSetupContext) -> SetupResult:
         if self.scope is CommandScope.PRIVATE:
-            chat_types: Optional[list[tg_const.ChatType]] = [tg_const.ChatType.private]
+            chat_types: list[tg_const.ChatType] | None = [tg_const.ChatType.private]
         elif self.scope is CommandScope.GROUP:
             chat_types = [tg_const.ChatType.group, tg_const.ChatType.supergroup]
         else:
@@ -57,7 +59,7 @@ class CommandEntryPoint(UserFlowEntryPoint):
         res = SetupResult.empty()
         if self.short_description is not None:
             if self.scope is CommandScope.PRIVATE:
-                scope: Optional[tg.BotCommandScope] = tg.BotCommandScopeAllPrivateChats()
+                scope: tg.BotCommandScope | None = tg.BotCommandScopeAllPrivateChats()
             elif self.scope is CommandScope.GROUP:
                 scope = tg.BotCommandScopeAllGroupChats()
             else:
@@ -69,6 +71,7 @@ class CommandEntryPoint(UserFlowEntryPoint):
                         description=self.short_description,
                     ),
                     scope=scope,
+                    rank=self.menu_rank,
                 )
             )
         return res

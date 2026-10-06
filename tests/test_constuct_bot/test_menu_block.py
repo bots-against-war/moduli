@@ -121,14 +121,16 @@ async def test_flow_with_menu() -> None:
     )
     assert bot.method_calls["send_message"][1].full_kwargs["reply_markup"].to_dict() == {
         "inline_keyboard": [
-            [{"text": "one", "callback_data": "terminator:8d6ab84ca2af9fcc-0"}],
-            [{"text": "two", "callback_data": "terminator:8d6ab84ca2af9fcc-1"}],
+            [{"text": "one", "callback_data": "action:a296a4e2c3d1da31f09426194a558038"}],
+            [{"text": "two", "callback_data": "action:30c04eafbba0c73a79ee472f53ae67d9"}],
         ]
     }
     bot.method_calls.clear()
 
     # pressing the first button
-    await bot.process_new_updates([tg_update_callback_query(USER_ID, first_name="User", callback_query="terminator:0")])
+    await bot.process_new_updates(
+        [tg_update_callback_query(USER_ID, first_name="User", callback_query="action:a296a4e2c3d1da31f09426194a558038")]
+    )
     assert_method_call_kwargs_include(
         bot.method_calls["send_message"], [{"chat_id": 1312, "text": "message on option one"}]
     )
@@ -136,7 +138,9 @@ async def test_flow_with_menu() -> None:
     bot.method_calls.clear()
 
     # pressing the second button
-    await bot.process_new_updates([tg_update_callback_query(USER_ID, first_name="User", callback_query="terminator:1")])
+    await bot.process_new_updates(
+        [tg_update_callback_query(USER_ID, first_name="User", callback_query="action:30c04eafbba0c73a79ee472f53ae67d9")]
+    )
     assert_method_call_kwargs_include(
         bot.method_calls["send_message"], [{"chat_id": 1312, "text": "message on option two"}]
     )
@@ -144,7 +148,7 @@ async def test_flow_with_menu() -> None:
     bot.method_calls.clear()
 
 
-async def test_flow_with_nexted_menu() -> None:
+async def test_flow_with_multilevel_menu() -> None:
     USER_ID = 1312
     bot_config = BotConfig(
         token_secret_name="token",
@@ -230,7 +234,10 @@ async def test_flow_with_nexted_menu() -> None:
     bot.method_calls.clear()
 
     # /start command
-    await bot.process_new_updates([tg_update_message_to_bot(USER_ID, first_name="User", text="/start")])
+    user_msg_id = 1
+    await bot.process_new_updates(
+        [tg_update_message_to_bot(USER_ID, first_name="User", text="/start", message_id=user_msg_id)]
+    )
     assert_method_call_dictified_kwargs_include(
         bot.method_calls["send_message"],
         [
@@ -239,8 +246,8 @@ async def test_flow_with_nexted_menu() -> None:
                 "text": "top level menu",
                 "reply_markup": {
                     "inline_keyboard": [
-                        [{"text": "one", "callback_data": "menu:8d6ab84ca2af9fcc-1"}],
-                        [{"text": "two", "callback_data": "terminator:8d6ab84ca2af9fcc-1"}],
+                        [{"text": "one", "callback_data": "action:5d9b64fb776b71bb217dbd48e1a3e6a5"}],
+                        [{"text": "two", "callback_data": "action:7f2eb610665b88cd72dba67770b674b4"}],
                     ]
                 },
             }
@@ -248,9 +255,18 @@ async def test_flow_with_nexted_menu() -> None:
     )
     bot.method_calls.clear()
 
+    menu_msg_id = bot._latest_message_id_by_chat[USER_ID]
+
     # pressing the second (terminating) button
     await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="terminator:8d6ab84ca2af9fcc-1")]
+        [
+            tg_update_callback_query(
+                USER_ID,
+                first_name="User",
+                callback_query="action:7f2eb610665b88cd72dba67770b674b4",
+                message_id=menu_msg_id,
+            )
+        ]
     )
     assert_method_call_kwargs_include(
         bot.method_calls["send_message"], [{"chat_id": 1312, "text": "message after menu"}]
@@ -258,11 +274,16 @@ async def test_flow_with_nexted_menu() -> None:
     assert bot.method_calls["send_message"][0].full_kwargs["reply_markup"].to_json() == '{"remove_keyboard":true}'
     bot.method_calls.clear()
 
-    # resending menu and pressing the first button
-    await bot.process_new_updates([tg_update_message_to_bot(USER_ID, first_name="User", text="/start")])
-    bot.method_calls.clear()
+    # now pressing the first button
     await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:8d6ab84ca2af9fcc-1")]
+        [
+            tg_update_callback_query(
+                USER_ID,
+                first_name="User",
+                callback_query="action:5d9b64fb776b71bb217dbd48e1a3e6a5",
+                message_id=menu_msg_id,
+            )
+        ]
     )
     assert not bot.method_calls.get("send_message")
     assert_method_call_dictified_kwargs_include(
@@ -271,12 +292,12 @@ async def test_flow_with_nexted_menu() -> None:
             {
                 "chat_id": 1312,
                 "text": "second level menu",
-                "message_id": 1,
+                "message_id": 2,
                 "reply_markup": {
                     "inline_keyboard": [
-                        [{"text": "foo", "callback_data": "terminator:8d6ab84ca2af9fcc-2"}],
-                        [{"text": "bar", "callback_data": "terminator:8d6ab84ca2af9fcc-3"}],
-                        [{"text": "<-", "callback_data": "menu:8d6ab84ca2af9fcc-0"}],
+                        [{"text": "foo", "callback_data": "action:6a5939a15a2a05265a71e9828ca655c6"}],
+                        [{"text": "bar", "callback_data": "action:6a5939a15a2a05265a71e9828ca655c6"}],
+                        [{"text": "<-", "callback_data": "action:eecfc468ceb0c62dce4e91522a7a4bbe"}],
                     ]
                 },
             }
@@ -285,14 +306,55 @@ async def test_flow_with_nexted_menu() -> None:
     bot.method_calls.clear()
 
     # pressing the first button in submeny
-    await bot.process_new_updates([tg_update_callback_query(USER_ID, first_name="User", callback_query="terminator:2")])
+    await bot.process_new_updates(
+        [
+            tg_update_callback_query(
+                USER_ID,
+                first_name="User",
+                callback_query="action:6a5939a15a2a05265a71e9828ca655c6",
+                message_id=menu_msg_id,
+            )
+        ]
+    )
     assert_method_call_kwargs_include(
         bot.method_calls["send_message"], [{"chat_id": 1312, "text": "message after menu"}]
     )
     bot.method_calls.clear()
 
+    # going back to the top-level
+    await bot.process_new_updates(
+        [
+            tg_update_callback_query(
+                USER_ID,
+                first_name="User",
+                callback_query="action:eecfc468ceb0c62dce4e91522a7a4bbe",
+                message_id=menu_msg_id,
+            )
+        ]
+    )
+    assert not bot.method_calls.get("send_message")
+    assert_method_call_dictified_kwargs_include(
+        bot.method_calls["edit_message_text"],
+        [
+            {
+                "chat_id": 1312,
+                "text": "top level menu",
+                "message_id": 2,
+                "reply_markup": {
+                    "inline_keyboard": [
+                        [{"text": "one", "callback_data": "action:5d9b64fb776b71bb217dbd48e1a3e6a5"}],
+                        [{"text": "two", "callback_data": "action:7f2eb610665b88cd72dba67770b674b4"}],
+                    ]
+                },
+            }
+        ],
+    )
+    bot.method_calls.clear()
 
-def make_menu_blocks(connections: dict[str, list[str]]) -> list[MenuBlock]:
+
+def make_menu_blocks(
+    connections: dict[str, list[str]], mechanism: MenuMechanism = MenuMechanism.INLINE_BUTTONS
+) -> list[MenuBlock]:
     return [
         MenuBlock(
             block_id=f"menu-{menu_name}",
@@ -308,7 +370,7 @@ def make_menu_blocks(connections: dict[str, list[str]]) -> list[MenuBlock]:
                 config=MenuConfig(
                     back_label="<-",
                     lock_after_termination=False,
-                    mechanism=MenuMechanism.INLINE_BUTTONS,
+                    mechanism=mechanism,
                 ),
             ),
         )
@@ -389,7 +451,7 @@ async def test_multilevel_menu() -> None:
                 "text": "A",
                 "reply_markup": {
                     "inline_keyboard": [
-                        [{"text": "B", "callback_data": "menu:3b7f5e8a6401a0e6-1"}],
+                        [{"text": "B", "callback_data": "action:1b63f1a5c540280108c3f772a54e7e7a"}],
                     ]
                 },
             }
@@ -397,22 +459,31 @@ async def test_multilevel_menu() -> None:
     )
     bot.method_calls.clear()
 
+    menu_msg_id = bot._latest_message_id_by_chat[USER_ID]
+
     # to the next menu
     await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:3b7f5e8a6401a0e6-1")]
+        [
+            tg_update_callback_query(
+                USER_ID,
+                first_name="User",
+                callback_query="action:1b63f1a5c540280108c3f772a54e7e7a",
+                message_id=menu_msg_id,
+            )
+        ]
     )
     assert_method_call_dictified_kwargs_include(
         bot.method_calls["edit_message_text"],
         [
             {
-                "message_id": 1,
+                "message_id": menu_msg_id,
                 "chat_id": 1312,
                 "text": "B",
                 "parse_mode": None,
                 "reply_markup": {
                     "inline_keyboard": [
-                        [{"text": "C", "callback_data": "menu:3b7f5e8a6401a0e6-2"}],
-                        [{"text": "<-", "callback_data": "menu:3b7f5e8a6401a0e6-0"}],
+                        [{"text": "C", "callback_data": "action:ae64272b007932d17220d5e5d9870452"}],
+                        [{"text": "<-", "callback_data": "action:3b4faf3c174efaba47f16a4dce424597"}],
                     ]
                 },
             }
@@ -422,7 +493,14 @@ async def test_multilevel_menu() -> None:
 
     # ...and to the next
     await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:3b7f5e8a6401a0e6-2")]
+        [
+            tg_update_callback_query(
+                USER_ID,
+                first_name="User",
+                callback_query="action:ae64272b007932d17220d5e5d9870452",
+                message_id=menu_msg_id,
+            )
+        ]
     )
     assert_method_call_dictified_kwargs_include(
         bot.method_calls["edit_message_text"],
@@ -430,12 +508,11 @@ async def test_multilevel_menu() -> None:
             {
                 "chat_id": 1312,
                 "text": "C",
-                "parse_mode": None,
-                "message_id": 1,
+                "message_id": menu_msg_id,
                 "reply_markup": {
                     "inline_keyboard": [
-                        [{"text": "finish", "callback_data": "terminator:3b7f5e8a6401a0e6-2"}],
-                        [{"text": "<-", "callback_data": "menu:3b7f5e8a6401a0e6-1"}],
+                        [{"text": "finish", "callback_data": "action:a59095b0b9144fd6dfc66faac7695e48"}],
+                        [{"text": "<-", "callback_data": "action:d8f99604d411721de13accee9ca0d745"}],
                     ]
                 },
             }
@@ -445,7 +522,14 @@ async def test_multilevel_menu() -> None:
 
     # back to B
     await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:3b7f5e8a6401a0e6-1")]
+        [
+            tg_update_callback_query(
+                USER_ID,
+                first_name="User",
+                callback_query="action:d8f99604d411721de13accee9ca0d745",
+                message_id=menu_msg_id,
+            )
+        ]
     )
     assert_method_call_dictified_kwargs_include(
         bot.method_calls["edit_message_text"],
@@ -454,11 +538,11 @@ async def test_multilevel_menu() -> None:
                 "chat_id": 1312,
                 "text": "B",
                 "parse_mode": None,
-                "message_id": 1,
+                "message_id": menu_msg_id,
                 "reply_markup": {
                     "inline_keyboard": [
-                        [{"text": "C", "callback_data": "menu:3b7f5e8a6401a0e6-2"}],
-                        [{"text": "<-", "callback_data": "menu:3b7f5e8a6401a0e6-0"}],
+                        [{"text": "C", "callback_data": "action:ae64272b007932d17220d5e5d9870452"}],
+                        [{"text": "<-", "callback_data": "action:3b4faf3c174efaba47f16a4dce424597"}],
                     ]
                 },
             }
@@ -536,31 +620,38 @@ async def test_dag_menu() -> None:
         bot.method_calls["send_message"],
         [
             {
+                "chat_id": USER_ID,
                 "text": "A",
+                "parse_mode": None,
                 "reply_markup": {
                     "inline_keyboard": [
-                        [{"text": "B", "callback_data": "menu:3b7f5e8a6401a0e6-1"}],
-                        [{"text": "D", "callback_data": "menu:3b7f5e8a6401a0e6-2"}],
+                        [{"text": "B", "callback_data": "action:1b63f1a5c540280108c3f772a54e7e7a"}],
+                        [{"text": "D", "callback_data": "action:8bd0a2d362f0ef5713fc72ccb87b798b"}],
                     ]
                 },
             }
         ],
     )
     bot.method_calls.clear()
+
+    msg_id = bot._latest_message_id_by_chat[USER_ID]
+    kwargs = dict(user_id=USER_ID, first_name="User", message_id=msg_id)
 
     # D -> E branch
     await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:3b7f5e8a6401a0e6-2")]
+        [tg_update_callback_query(callback_query="action:8bd0a2d362f0ef5713fc72ccb87b798b", **kwargs)]  # type: ignore
     )
     assert_method_call_dictified_kwargs_include(
         bot.method_calls["edit_message_text"],
         [
             {
+                "chat_id": USER_ID,
                 "text": "D",
+                "message_id": msg_id,
                 "reply_markup": {
                     "inline_keyboard": [
-                        [{"text": "E", "callback_data": "menu:3b7f5e8a6401a0e6-4"}],
-                        [{"text": "<-", "callback_data": "menu:3b7f5e8a6401a0e6-0"}],
+                        [{"text": "E", "callback_data": "action:53a5b1e69b16fda19d316b84e1668798"}],
+                        [{"text": "<-", "callback_data": "action:6b5552ba8e186bd4152303f6b612adbb"}],
                     ]
                 },
             }
@@ -569,32 +660,47 @@ async def test_dag_menu() -> None:
     bot.method_calls.clear()
 
     await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:3b7f5e8a6401a0e6-4")]
+        [tg_update_callback_query(callback_query="action:53a5b1e69b16fda19d316b84e1668798", **kwargs)]  # type: ignore
     )
     assert_method_call_dictified_kwargs_include(
         bot.method_calls["edit_message_text"],
         [
             {
+                "chat_id": USER_ID,
                 "text": "E",
-                "reply_markup": {"inline_keyboard": [[{"text": "<-", "callback_data": "menu:3b7f5e8a6401a0e6-2"}]]},
+                "message_id": msg_id,
+                "reply_markup": {
+                    "inline_keyboard": [[{"text": "<-", "callback_data": "action:45e098856e1190fbd9aae06876a57ae9"}]]
+                },
             }
+        ],
+    )
+    bot.method_calls.clear()
+
+    # going back to the main menu
+    await bot.process_new_updates(
+        [
+            tg_update_callback_query(callback_query="action:45e098856e1190fbd9aae06876a57ae9", **kwargs),  # type: ignore
+            tg_update_callback_query(callback_query="action:6b5552ba8e186bd4152303f6b612adbb", **kwargs),  # type: ignore
         ],
     )
     bot.method_calls.clear()
 
     # B -> C branch
     await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:3b7f5e8a6401a0e6-1")]
+        [tg_update_callback_query(callback_query="action:1b63f1a5c540280108c3f772a54e7e7a", **kwargs)]  # type: ignore
     )
     assert_method_call_dictified_kwargs_include(
         bot.method_calls["edit_message_text"],
         [
             {
+                "chat_id": USER_ID,
                 "text": "B",
+                "message_id": msg_id,
                 "reply_markup": {
                     "inline_keyboard": [
-                        [{"text": "C", "callback_data": "menu:3b7f5e8a6401a0e6-3"}],
-                        [{"text": "<-", "callback_data": "menu:3b7f5e8a6401a0e6-0"}],
+                        [{"text": "C", "callback_data": "action:ae64272b007932d17220d5e5d9870452"}],
+                        [{"text": "<-", "callback_data": "action:3b4faf3c174efaba47f16a4dce424597"}],
                     ]
                 },
             }
@@ -603,20 +709,19 @@ async def test_dag_menu() -> None:
     bot.method_calls.clear()
 
     await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:3b7f5e8a6401a0e6-3")]
+        [tg_update_callback_query(callback_query="action:ae64272b007932d17220d5e5d9870452", **kwargs)]  # type: ignore
     )
     assert_method_call_dictified_kwargs_include(
         bot.method_calls["edit_message_text"],
         [
             {
-                "chat_id": 1312,
+                "chat_id": USER_ID,
                 "text": "C",
-                "parse_mode": None,
-                "message_id": 1,
+                "message_id": msg_id,
                 "reply_markup": {
                     "inline_keyboard": [
-                        [{"text": "E", "callback_data": "terminator:3b7f5e8a6401a0e6-4"}],
-                        [{"text": "<-", "callback_data": "menu:3b7f5e8a6401a0e6-1"}],
+                        [{"text": "E", "callback_data": "action:662f086213b5979b74ad0cd1e4c60416"}],
+                        [{"text": "<-", "callback_data": "action:d8f99604d411721de13accee9ca0d745"}],
                     ]
                 },
             }
@@ -625,12 +730,66 @@ async def test_dag_menu() -> None:
     bot.method_calls.clear()
 
     await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="terminator:3b7f5e8a6401a0e6-4")]
+        [tg_update_callback_query(callback_query="action:662f086213b5979b74ad0cd1e4c60416", **kwargs)]  # type: ignore
     )
     assert_method_call_dictified_kwargs_include(
-        bot.method_calls["send_message"],
+        bot.method_calls["edit_message_text"],
         [
-            {"chat_id": 1312, "text": "E", "parse_mode": None, "reply_markup": {"inline_keyboard": []}},
+            {
+                "chat_id": USER_ID,
+                "text": "E",
+                "message_id": msg_id,
+                "reply_markup": {
+                    "inline_keyboard": [[{"text": "<-", "callback_data": "action:45e098856e1190fbd9aae06876a57ae9"}]]
+                },
+            }
+        ],
+    )
+    bot.method_calls.clear()
+
+    await bot.process_new_updates(
+        [
+            tg_update_callback_query(callback_query="action:45e098856e1190fbd9aae06876a57ae9", **kwargs),  # type: ignore
+            tg_update_callback_query(callback_query="action:d8f99604d411721de13accee9ca0d745", **kwargs),  # type: ignore
+            tg_update_callback_query(callback_query="action:3b4faf3c174efaba47f16a4dce424597", **kwargs),  # type: ignore
+        ]
+    )
+    assert_method_call_dictified_kwargs_include(
+        bot.method_calls["edit_message_text"],
+        [
+            {
+                "chat_id": USER_ID,
+                "text": "C",
+                "message_id": msg_id,
+                "reply_markup": {
+                    "inline_keyboard": [
+                        [{"text": "E", "callback_data": "action:662f086213b5979b74ad0cd1e4c60416"}],
+                        [{"text": "<-", "callback_data": "action:d8f99604d411721de13accee9ca0d745"}],
+                    ]
+                },
+            },
+            {
+                "chat_id": USER_ID,
+                "text": "B",
+                "message_id": msg_id,
+                "reply_markup": {
+                    "inline_keyboard": [
+                        [{"text": "C", "callback_data": "action:ae64272b007932d17220d5e5d9870452"}],
+                        [{"text": "<-", "callback_data": "action:3b4faf3c174efaba47f16a4dce424597"}],
+                    ]
+                },
+            },
+            {
+                "chat_id": USER_ID,
+                "text": "A",
+                "message_id": msg_id,
+                "reply_markup": {
+                    "inline_keyboard": [
+                        [{"text": "B", "callback_data": "action:1b63f1a5c540280108c3f772a54e7e7a"}],
+                        [{"text": "D", "callback_data": "action:8bd0a2d362f0ef5713fc72ccb87b798b"}],
+                    ]
+                },
+            },
         ],
     )
     bot.method_calls.clear()
@@ -643,25 +802,33 @@ async def test_dag_menu() -> None:
         bot.method_calls["send_message"],
         [
             {
+                "chat_id": USER_ID,
                 "text": "B",
-                "reply_markup": {"inline_keyboard": [[{"text": "C", "callback_data": "menu:c5095a1b07406fc0-1"}]]},
+                "reply_markup": {
+                    "inline_keyboard": [[{"text": "C", "callback_data": "action:ae64272b007932d17220d5e5d9870452"}]]
+                },
             }
         ],
     )
     bot.method_calls.clear()
 
+    msg_id = bot._latest_message_id_by_chat[USER_ID]
+    kwargs = dict(user_id=USER_ID, first_name="User", message_id=msg_id)
+
     await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:c5095a1b07406fc0-1")]
+        [tg_update_callback_query(callback_query="action:ae64272b007932d17220d5e5d9870452", **kwargs)]  # type: ignore
     )
     assert_method_call_dictified_kwargs_include(
         bot.method_calls["edit_message_text"],
         [
             {
+                "chat_id": USER_ID,
                 "text": "C",
+                "message_id": msg_id,
                 "reply_markup": {
                     "inline_keyboard": [
-                        [{"text": "E", "callback_data": "menu:c5095a1b07406fc0-2"}],
-                        [{"text": "<-", "callback_data": "menu:c5095a1b07406fc0-0"}],
+                        [{"text": "E", "callback_data": "action:662f086213b5979b74ad0cd1e4c60416"}],
+                        [{"text": "<-", "callback_data": "action:d8f99604d411721de13accee9ca0d745"}],
                     ]
                 },
             }
@@ -670,42 +837,66 @@ async def test_dag_menu() -> None:
     bot.method_calls.clear()
 
     await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:c5095a1b07406fc0-2")]
+        [tg_update_callback_query(callback_query="action:662f086213b5979b74ad0cd1e4c60416", **kwargs)]  # type: ignore
     )
     assert_method_call_dictified_kwargs_include(
         bot.method_calls["edit_message_text"],
         [
             {
+                "chat_id": USER_ID,
                 "text": "E",
+                "message_id": msg_id,
                 "reply_markup": {
-                    "inline_keyboard": [
-                        [{"text": "<-", "callback_data": "menu:c5095a1b07406fc0-1"}],
-                    ]
+                    "inline_keyboard": [[{"text": "<-", "callback_data": "action:45e098856e1190fbd9aae06876a57ae9"}]]
                 },
             }
         ],
     )
     bot.method_calls.clear()
 
+    await bot.process_new_updates(
+        [
+            tg_update_callback_query(callback_query="action:45e098856e1190fbd9aae06876a57ae9", **kwargs),  # type: ignore
+            tg_update_callback_query(callback_query="action:d8f99604d411721de13accee9ca0d745", **kwargs),  # type: ignore
+        ]
+    )
+    assert_method_call_dictified_kwargs_include(
+        bot.method_calls["edit_message_text"],
+        [
+            {
+                "chat_id": USER_ID,
+                "text": "C",
+                "message_id": msg_id,
+                "reply_markup": {
+                    "inline_keyboard": [
+                        [{"text": "E", "callback_data": "action:662f086213b5979b74ad0cd1e4c60416"}],
+                        [{"text": "<-", "callback_data": "action:d8f99604d411721de13accee9ca0d745"}],
+                    ]
+                },
+            },
+            {
+                "chat_id": USER_ID,
+                "text": "B",
+                "message_id": msg_id,
+                "reply_markup": {
+                    "inline_keyboard": [
+                        [{"text": "C", "callback_data": "action:ae64272b007932d17220d5e5d9870452"}],
+                    ]
+                },
+            },
+        ],
+    )
+    bot.method_calls.clear()
 
-async def test_rhombus_menu() -> None:
-    """
-    A menu with more than one way to get to a submenu. The "back" button from D will lead to one
-    of the parents, but this must be consistent.
 
-        ┌───┐
-      ┌─┤ A ├─┐
-      │ └───┘ │
-    ┌─▼─┐   ┌─▼─┐
-    │ B │   │ C │
-    └─┬─┘   └─┬─┘
-      │ ┌───┐ │
-      └►│ D │◄┘
-        └───┘
-    """
+async def test_multilevel_menu_reply_kbd() -> None:
     USER_ID = 1312
 
-    menu_blocks = make_menu_blocks({"A": ["B", "C"], "B": ["D"], "C": ["D"], "D": ["E"], "E": []})
+    menu_a, menu_b, menu_c = make_menu_blocks(
+        {"A": ["B"], "B": ["C"], "C": []},
+        mechanism=MenuMechanism.REPLY_KEYBOARD,
+    )
+    menu_c.menu.items.append(MenuItem(label="finish", next_block_id="fin-message"))
     bot_config = BotConfig(
         token_secret_name="token",
         display_name="Menu bot",
@@ -715,14 +906,21 @@ async def test_rhombus_menu() -> None:
                     command=CommandEntryPoint(entrypoint_id="start-cmd", command="start", next_block_id="menu-A"),
                 )
             ],
-            blocks=[UserFlowBlockConfig(menu=menu) for menu in menu_blocks],
+            blocks=[
+                UserFlowBlockConfig(menu=menu_a),
+                UserFlowBlockConfig(menu=menu_b),
+                UserFlowBlockConfig(menu=menu_c),
+                UserFlowBlockConfig(
+                    content=ContentBlock.simple_text(block_id="fin-message", message_text="finish", next_block_id=None),
+                ),
+            ],
             node_display_coords={},
         ),
     )
 
     redis = RedisEmulation()
     secret_store = dummy_secret_store(redis)
-    username = "user12345"
+    username = "username"
     await secret_store.save_secret(secret_name="token", secret_value="mock-token", owner_id=username)
     bot_runner = await construct_bot(
         owner_id=username,
@@ -731,8 +929,8 @@ async def test_rhombus_menu() -> None:
         form_results_store=dummy_form_results_store(),
         errors_store=dummy_errors_store(),
         secret_store=secret_store,
-        owner_chat_id=0,
         redis=redis,
+        owner_chat_id=0,
         _bot_factory=MockedAsyncTeleBot,
     )
 
@@ -743,97 +941,52 @@ async def test_rhombus_menu() -> None:
     assert isinstance(bot, MockedAsyncTeleBot)
     bot.method_calls.clear()
 
-    # entry point 1
-
     # /start command
     await bot.process_new_updates([tg_update_message_to_bot(USER_ID, first_name="User", text="/start")])
     assert_method_call_dictified_kwargs_include(
         bot.method_calls["send_message"],
         [
             {
+                "chat_id": 1312,
                 "text": "A",
                 "reply_markup": {
-                    "inline_keyboard": [
-                        [{"text": "B", "callback_data": "menu:3b7f5e8a6401a0e6-1"}],
-                        [{"text": "C", "callback_data": "menu:3b7f5e8a6401a0e6-2"}],
-                    ]
+                    "keyboard": [[{"text": "B"}]],
+                    "one_time_keyboard": True,
+                    "resize_keyboard": True,
                 },
             }
         ],
     )
     bot.method_calls.clear()
 
-    # right branch
-    await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:3b7f5e8a6401a0e6-2")]
-    )
+    await bot.process_new_updates([tg_update_message_to_bot(USER_ID, first_name="User", text="B")])
     assert_method_call_dictified_kwargs_include(
-        bot.method_calls["edit_message_text"],
+        bot.method_calls["send_message"],
         [
             {
-                "text": "C",
-                "reply_markup": {
-                    "inline_keyboard": [
-                        [{"text": "D", "callback_data": "menu:3b7f5e8a6401a0e6-5"}],
-                        [{"text": "<-", "callback_data": "menu:3b7f5e8a6401a0e6-0"}],
-                    ]
-                },
-            }
-        ],
-    )
-    bot.method_calls.clear()
-
-    await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:3b7f5e8a6401a0e6-5")]
-    )
-    assert_method_call_dictified_kwargs_include(
-        bot.method_calls["edit_message_text"],
-        [
-            {
-                "text": "D",
-                "reply_markup": {
-                    "inline_keyboard": [
-                        [{"text": "E", "callback_data": "menu:3b7f5e8a6401a0e6-6"}],
-                        [{"text": "<-", "callback_data": "menu:3b7f5e8a6401a0e6-2"}],
-                    ]
-                },
-            }
-        ],
-    )
-    bot.method_calls.clear()
-
-    await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:3b7f5e8a6401a0e6-6")]
-    )
-    assert_method_call_dictified_kwargs_include(
-        bot.method_calls["edit_message_text"],
-        [
-            {
-                "text": "E",
-                "reply_markup": {
-                    "inline_keyboard": [
-                        [{"text": "<-", "callback_data": "menu:3b7f5e8a6401a0e6-5"}],
-                    ]
-                },
-            }
-        ],
-    )
-    bot.method_calls.clear()
-
-    # left branch
-    await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:3b7f5e8a6401a0e6-1")]
-    )
-    assert_method_call_dictified_kwargs_include(
-        bot.method_calls["edit_message_text"],
-        [
-            {
+                "chat_id": 1312,
                 "text": "B",
                 "reply_markup": {
-                    "inline_keyboard": [
-                        [{"text": "D", "callback_data": "menu:3b7f5e8a6401a0e6-3"}],
-                        [{"text": "<-", "callback_data": "menu:3b7f5e8a6401a0e6-0"}],
-                    ]
+                    "keyboard": [[{"text": "C"}], [{"text": "<-"}]],
+                    "one_time_keyboard": True,
+                    "resize_keyboard": True,
+                },
+            }
+        ],
+    )
+    bot.method_calls.clear()
+
+    await bot.process_new_updates([tg_update_message_to_bot(USER_ID, first_name="User", text="C")])
+    assert_method_call_dictified_kwargs_include(
+        bot.method_calls["send_message"],
+        [
+            {
+                "chat_id": 1312,
+                "text": "C",
+                "reply_markup": {
+                    "keyboard": [[{"text": "finish"}], [{"text": "<-"}]],
+                    "one_time_keyboard": True,
+                    "resize_keyboard": True,
                 },
             }
         ],
@@ -841,38 +994,32 @@ async def test_rhombus_menu() -> None:
     bot.method_calls.clear()
 
     await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:3b7f5e8a6401a0e6-3")]
+        [
+            tg_update_message_to_bot(USER_ID, first_name="User", text="<-"),
+            tg_update_message_to_bot(USER_ID, first_name="User", text="<-"),
+        ]
     )
     assert_method_call_dictified_kwargs_include(
-        bot.method_calls["edit_message_text"],
+        bot.method_calls["send_message"],
         [
             {
-                "text": "D",
+                "chat_id": 1312,
+                "text": "B",
                 "reply_markup": {
-                    "inline_keyboard": [
-                        [{"text": "E", "callback_data": "menu:3b7f5e8a6401a0e6-4"}],
-                        [{"text": "<-", "callback_data": "menu:3b7f5e8a6401a0e6-1"}],
-                    ]
+                    "keyboard": [[{"text": "C"}], [{"text": "<-"}]],
+                    "one_time_keyboard": True,
+                    "resize_keyboard": True,
                 },
-            }
-        ],
-    )
-    bot.method_calls.clear()
-
-    await bot.process_new_updates(
-        [tg_update_callback_query(USER_ID, first_name="User", callback_query="menu:3b7f5e8a6401a0e6-4")]
-    )
-    assert_method_call_dictified_kwargs_include(
-        bot.method_calls["edit_message_text"],
-        [
+            },
             {
-                "text": "E",
+                "chat_id": 1312,
+                "text": "A",
                 "reply_markup": {
-                    "inline_keyboard": [
-                        [{"text": "<-", "callback_data": "menu:3b7f5e8a6401a0e6-3"}],
-                    ]
+                    "keyboard": [[{"text": "B"}]],
+                    "one_time_keyboard": True,
+                    "resize_keyboard": True,
                 },
-            }
+            },
         ],
     )
     bot.method_calls.clear()

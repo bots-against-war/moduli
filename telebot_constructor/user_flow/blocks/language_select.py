@@ -2,11 +2,10 @@ from typing import Any, Optional
 
 from pydantic import BaseModel
 from telebot_components.language import LanguageChangeContext
-from telebot_components.stores.language import LanguageLabelPart
+from telebot_components.stores.language import LanguageLabelPart, LanguageStore
 from telebot_components.stores.language import (
     LanguageSelectionMenuConfig as ComponentsLanguageSelectionMenuConfig,
 )
-from telebot_components.stores.language import LanguageStore
 
 from telebot_constructor.user_flow.blocks.base import UserFlowBlock
 from telebot_constructor.user_flow.types import (

@@ -34,6 +34,8 @@ class ContentText(BaseModel):
     text: LocalizableText
     markup: TextMarkup
 
+    disable_link_preview: bool = False
+
     _preprocessed_text: LocalizableText | None = None
 
     @property
@@ -172,6 +174,7 @@ class ContentBlock(UserFlowBlock):
                         text=any_text_to_str(content.text.preprocessed, language),
                         parse_mode=parse_mode,
                         reply_markup=tg.ReplyKeyboardRemove(),
+                        disable_web_page_preview=content.text.disable_link_preview,
                     )
                 else:
                     self._logger.error("Empty content block: no text and no attachments!")
@@ -196,6 +199,7 @@ class ContentBlock(UserFlowBlock):
                         ]
                     else:
                         self._logger.error("Unexpected attachment type; only images are supported for now")
+                        messages = []
                 else:
                     # multiple attachments case
                     tg_input_media = [
@@ -238,7 +242,7 @@ class ContentBlock(UserFlowBlock):
             await context.enter_block(self.next_block_id, context)
 
     async def setup(self, context: UserFlowSetupContext) -> SetupResult:
-        self._logger = context.make_instrumented_logger(__name__)
+        self._logger = context.make_instrumented_logger(__name__, self.block_id)
         self._tg_file_id_by_media_id_store = KeyValueStore[str](
             name="file-id",
             prefix=context.bot_prefix,

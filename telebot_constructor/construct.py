@@ -3,6 +3,7 @@ import logging
 from typing import Callable, Coroutine, Optional, Type
 
 from telebot import AsyncTeleBot
+from telebot import types as tg
 from telebot.metrics import TelegramUpdateMetricsHandler
 from telebot.runner import AuxBotEndpoint, BotRunner
 from telebot_components.redis_utils.interface import RedisInterface
@@ -77,9 +78,11 @@ async def construct_bot(
     bot_commands: list[BotCommandInfo] = []
 
     try:
+        bot_user: tg.User | None = None
         async for attempt in rate_limit_retry():
             with attempt:
                 bot_user = await bot.get_me()
+        assert bot_user is not None
         logger.info(f"Bot user loaded: {bot_user.to_json()}")
     except Exception:
         logger.exception("Error getting bot user, probably an invalid token")
@@ -109,7 +112,7 @@ async def construct_bot(
         bot_commands.extend(user_flow_setup_result.bot_commands)
 
     # TODO: cleanup for possible stale bot commands (maybe on an explicit user action?)
-    logger.debug(f"Setting bot commands: {'; '.join(str(bc) for bc in bot_commands)}")
+    logger.debug(f"Setting {len(bot_commands)} bot commands")
     for _, scoped_commands_it in itertools.groupby(
         sorted(
             bot_commands,
@@ -117,7 +120,8 @@ async def construct_bot(
         ),
         key=BotCommandInfo.scope_key,
     ):
-        command_info_batch = list(scoped_commands_it)
+        # sorting commands by rank (putting unranked last)
+        command_info_batch = sorted(scoped_commands_it, key=lambda cbi: cbi.rank if cbi.rank is not None else 10000)
         logger.debug(f"Bot command batch: {'; '.join(str(bc) for bc in command_info_batch)}")
         try:
             async for attempt in rate_limit_retry():
@@ -126,8 +130,13 @@ async def construct_bot(
                         commands=[cmd.command for cmd in command_info_batch],
                         scope=command_info_batch[0].scope,
                     )
-        except Exception:
-            logger.exception("Error setting bot commands")
+        except Exception as e:
+            if "chat not found" in str(e):
+                # this usually happens when users create bot with PM as admin chat but don't
+                # activate the bot
+                logger.info(f"Failed to set bot commands: {e}")
+            else:
+                logger.exception("Error setting bot commands")
 
     if group_chat_discovery_handler is not None:
         group_chat_discovery_handler.setup_handlers(owner_id=owner_id, bot_id=bot_id, bot=bot)

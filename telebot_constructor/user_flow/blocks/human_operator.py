@@ -79,7 +79,6 @@ class HumanOperatorBlock(UserFlowBlock):
         return self.catch_all
 
     async def setup(self, context: UserFlowSetupContext) -> SetupResult:
-
         async def custom_user_message_filter(message: tg.Message) -> bool:
             if self.catch_all:
                 return True

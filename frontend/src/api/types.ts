@@ -11,6 +11,7 @@ export type Command = string;
 export type NextBlockId = string | null;
 export type CommandScope = "private" | "group" | "any";
 export type ShortDescription = string | null;
+export type MenuRank = number | null;
 export type EntrypointId1 = string;
 export type NextBlockId1 = string | null;
 export type EntrypointId2 = string;
@@ -24,6 +25,7 @@ export type Text =
       [k: string]: string;
     };
 export type TextMarkup = "none" | "html" | "markdown";
+export type DisableLinkPreview = boolean;
 export type Image = string | null;
 export type Attachments = ContentBlockContentAttachment[];
 export type Contents = Content[];
@@ -75,6 +77,7 @@ export type BackLabel =
   | null;
 export type LockAfterTermination = boolean;
 export type TextMarkup1 = "none" | "html" | "markdown";
+export type DisableLinkPreview1 = boolean;
 export type BlockId3 = string;
 export type FormName = string;
 export type Id = string;
@@ -211,6 +214,7 @@ export type Username2 = string;
 export type Name6 = string;
 export type DisplayUsername = string | null;
 export type Userpic1 = string | null;
+export type OwnerId = string;
 export type BotId = string;
 export type DisplayName1 = string;
 export type RunningVersion = number | null;
@@ -318,6 +322,7 @@ export interface CommandEntryPoint {
   next_block_id: NextBlockId;
   scope?: CommandScope;
   short_description?: ShortDescription;
+  menu_rank?: MenuRank;
   [k: string]: unknown;
 }
 /**
@@ -364,6 +369,7 @@ export interface Content {
 export interface ContentText {
   text: Text;
   markup: TextMarkup;
+  disable_link_preview?: DisableLinkPreview;
   [k: string]: unknown;
 }
 export interface ContentBlockContentAttachment {
@@ -404,9 +410,6 @@ export interface MessagesToAdmin {
   can_not_delete_message: CanNotDeleteMessage;
   [k: string]: unknown;
 }
-/**
- * Multilevel menu block powered by Telegram inline buttons
- */
 export interface MenuBlock {
   block_id: BlockId2;
   menu: Menu;
@@ -417,11 +420,11 @@ export interface Menu {
   items: Items;
   config: MenuConfig;
   markup?: TextMarkup1;
+  disable_link_preview?: DisableLinkPreview1;
   [k: string]: unknown;
 }
 export interface MenuItem {
   label: Label;
-  submenu?: Menu | null;
   next_block_id?: NextBlockId4;
   link_url?: LinkUrl;
   [k: string]: unknown;
@@ -615,6 +618,7 @@ export interface LoggedInUser {
   [k: string]: unknown;
 }
 export interface BotInfo {
+  owner_id: OwnerId;
   bot_id: BotId;
   display_name: DisplayName1;
   running_version: RunningVersion;

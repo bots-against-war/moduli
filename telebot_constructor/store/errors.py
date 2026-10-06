@@ -4,7 +4,7 @@ import sys
 import time
 import traceback
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, cast
 
 import pydantic
 from telebot_components.redis_utils.interface import RedisInterface
@@ -40,7 +40,7 @@ class BotError(pydantic.BaseModel):
     @classmethod
     def from_log_record(cls, record: logging.LogRecord) -> "BotError":
         try:
-            exc_type_str: str | None = record.exc_info[0].__name__  # type: ignore
+            exc_type_str = cast(str | None, record.exc_info[0].__name__)  # type: ignore
         except Exception:
             exc_type_str = None
 

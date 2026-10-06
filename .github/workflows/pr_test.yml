@@ -37,11 +37,10 @@ jobs:
         run: npm install
 
       # backend checks
-      - name: (back) Run linter and type checker tests
-        run: poetry run isort . --check &&
-          poetry run black . --check &&
-          poetry run mypy &&
-          poetry run flake8
+      - name: (back) Run ruff linter/formatter
+        uses: astral-sh/ruff-action@v3
+      - name: (back) Run mypy
+        run: poetry run mypy
       - name: (back) Run unit tests with coverage check
         run: |
           poetry run coverage run -m pytest tests -vv &&

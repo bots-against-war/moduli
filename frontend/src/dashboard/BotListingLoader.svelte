@@ -5,7 +5,9 @@
   import { unwrap } from "../utils.js";
   import BotListing from "./BotListing.svelte";
 
-  const loadBotList = async () => unwrap(await listBotInfos());
+  const urlParams = new URLSearchParams(window.location.search);
+  const all = urlParams.get("all");
+  const loadBotList = async () => unwrap(await listBotInfos(all === "true"));
 </script>
 
 {#await loadBotList()}
